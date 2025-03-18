@@ -5,12 +5,14 @@ const sql = neon(process.env.DATABASE_URL);
 
 // CORS headers
 const headers = {
-  'Access-Control-Allow-Origin': 'https://yptgrind.netlify.app',
+  'Access-Control-Allow-Origin': '*', // Allow both local and production
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
 exports.handler = async (event, context) => {
+  console.log('Quote request received:', event.body); // Add logging
+
   // Handle OPTIONS request for CORS
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -30,8 +32,11 @@ exports.handler = async (event, context) => {
   try {
     const { name, email, phone, company, serviceType, projectDetails, timeline, budgetRange } = JSON.parse(event.body);
     
+    console.log('Parsed data:', { name, email, serviceType }); // Log parsed data
+
     // Validate required fields
     if (!name || !email || !serviceType) {
+      console.log('Validation failed:', { name, email, serviceType }); // Log validation failure
       return {
         statusCode: 400,
         headers,
@@ -43,6 +48,7 @@ exports.handler = async (event, context) => {
     }
 
     // First, create or get customer
+    console.log('Creating/updating customer...'); // Log database operation
     const customer = await sql`
       INSERT INTO customers (name, email, phone, company)
       VALUES (${name}, ${email}, ${phone || null}, ${company || null})
@@ -52,8 +58,10 @@ exports.handler = async (event, context) => {
           company = COALESCE(${company || null}, customers.company)
       RETURNING id;
     `;
+    console.log('Customer created/updated:', customer); // Log result
 
     // Then create the quote request
+    console.log('Creating quote request...'); // Log database operation
     await sql`
       INSERT INTO quote_requests (
         customer_id,
@@ -69,14 +77,18 @@ exports.handler = async (event, context) => {
         ${budgetRange || null}
       );
     `;
+    console.log('Quote request created successfully'); // Log success
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true })
+      body: JSON.stringify({ 
+        success: true,
+        message: 'Quote request submitted successfully'
+      })
     };
   } catch (error) {
-    console.error('Quote request error:', error);
+    console.error('Quote request error:', error); // Log error details
     return {
       statusCode: 500,
       headers,
