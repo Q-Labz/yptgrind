@@ -3,17 +3,25 @@ require('dotenv').config();
 
 const sql = neon(process.env.DATABASE_URL);
 
-// CORS headers
-const headers = {
-  'Access-Control-Allow-Origin': '*', // Allow both local and production
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
-};
+// Allow both local development and production URLs
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3005',
+  'https://yptgrind.netlify.app'
+];
 
 exports.handler = async (event, context) => {
-  console.log('Contact form submission received:', event.body); // Add logging
+  // Get the request origin
+  const origin = event.headers.origin || event.headers.Origin || '';
+  
+  // Set CORS headers based on origin
+  const headers = {
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : allowedOrigins[0]
+  };
 
-  // Handle OPTIONS request for CORS
+  // Handle preflight requests
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -21,6 +29,7 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -30,13 +39,12 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    console.log('Contact form submission received:', event.body);
     const { name, email, phone, company, message } = JSON.parse(event.body);
     
-    console.log('Parsed data:', { name, email }); // Log parsed data
-
     // Validate required fields
     if (!name || !email || !message) {
-      console.log('Validation failed:', { name, email, message }); // Log validation failure
+      console.log('Validation failed:', { name, email, message });
       return {
         statusCode: 400,
         headers,
@@ -47,8 +55,8 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // First, create or get customer
-    console.log('Creating/updating customer...'); // Log database operation
+    // Create or update customer
+    console.log('Creating/updating customer...');
     const customer = await sql`
       INSERT INTO customers (name, email, phone, company)
       VALUES (${name}, ${email}, ${phone || null}, ${company || null})
@@ -58,31 +66,36 @@ exports.handler = async (event, context) => {
           company = COALESCE(${company || null}, customers.company)
       RETURNING id;
     `;
-    console.log('Customer created/updated:', customer); // Log result
+    console.log('Customer created/updated:', customer);
 
-    // Then create the contact message
-    console.log('Creating contact message...'); // Log database operation
+    // Create contact message
+    console.log('Creating contact message...');
     await sql`
-      INSERT INTO contact_messages (customer_id, message)
-      VALUES (${customer[0].id}, ${message});
+      INSERT INTO contact_messages (
+        customer_id,
+        message
+      ) VALUES (
+        ${customer[0].id},
+        ${message}
+      );
     `;
-    console.log('Contact message created successfully'); // Log success
+    console.log('Contact message created successfully');
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ 
         success: true,
-        message: 'Message sent successfully'
+        message: 'Message sent successfully! We\'ll get back to you soon.'
       })
     };
   } catch (error) {
-    console.error('Contact submission error:', error); // Log error details
+    console.error('Contact form error:', error);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
-        error: 'Failed to submit contact form',
+        error: 'Failed to send message',
         details: error.message
       })
     };

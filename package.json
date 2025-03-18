@@ -9,28 +9,15 @@
     "client": "cd client && PORT=3005 npm start",
     "dev:full": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd client && npm install && npm run build",
-    "build:functions": "netlify-lambda build functions"
+    "dev": "netlify dev"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.6.1",
-    "autoprefixer": "^10.4.21",
-    "bcryptjs": "^2.4.3",
-    "clsx": "^2.1.1",
-    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "encoding": "^0.1.13",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "netlify-lambda": "^2.0.16",
-    "openai": "^4.20.0",
-    "pg": "^8.14.1",
-    "postcss": "^8.5.3",
-    "tailwind-merge": "^3.0.2",
-    "tailwindcss": "^4.0.14"
+    "encoding": "^0.1.13"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "netlify-cli": "^19.0.2",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.3"
   }
 }
