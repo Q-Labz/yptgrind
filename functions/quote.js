@@ -3,10 +3,26 @@ require('dotenv').config();
 
 const sql = neon(process.env.DATABASE_URL);
 
+// CORS headers
+const headers = {
+  'Access-Control-Allow-Origin': 'https://yptgrind.netlify.app',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+};
+
 exports.handler = async (event, context) => {
+  // Handle OPTIONS request for CORS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -18,6 +34,7 @@ exports.handler = async (event, context) => {
     if (!name || !email || !serviceType) {
       return {
         statusCode: 400,
+        headers,
         body: JSON.stringify({ 
           error: 'Missing required fields',
           details: 'Name, email, and service type are required'
@@ -55,12 +72,14 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ success: true })
     };
   } catch (error) {
     console.error('Quote request error:', error);
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ 
         error: 'Failed to submit quote request',
         details: error.message
