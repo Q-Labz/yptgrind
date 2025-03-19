@@ -6,7 +6,6 @@ import {
   Alert,
   CircularProgress,
   MenuItem,
-  Typography,
   Fade
 } from '@mui/material';
 import { motion } from 'framer-motion';
@@ -49,20 +48,13 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user starts typing
-    if (status.error) {
-      setStatus(prev => ({ ...prev, error: null }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
+    // Validate required fields
     const errors = [];
     if (!formData.name) errors.push('Name is required');
     if (!formData.email) errors.push('Email is required');
@@ -85,7 +77,8 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
+        credentials: 'same-origin'
       });
 
       const data = await response.json();
@@ -128,220 +121,215 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
     }
   };
 
-  const formFields = [
-    { name: 'name', label: 'Name', required: true },
-    { name: 'email', label: 'Email', type: 'email', required: true },
-    { name: 'phone', label: 'Phone' },
-    { name: 'company', label: 'Company' },
-    { 
-      name: 'serviceType', 
-      label: 'Service Type', 
-      required: true,
-      select: true,
-      options: [
-        'Tool Grinding',
-        'Cutter Sharpening',
-        'Custom Tool Manufacturing',
-        'Tool Coating',
-        'Other'
-      ]
-    },
-    { 
-      name: 'projectDetails', 
-      label: 'Project Details', 
-      multiline: true, 
-      rows: 4,
-      required: true
-    },
-    { 
-      name: 'timeline', 
-      label: 'Timeline',
-      select: true,
-      options: timelineOptions
-    },
-    { 
-      name: 'budgetRange', 
-      label: 'Budget Range',
-      select: true,
-      options: budgetRangeOptions
-    }
-  ];
-
   return (
-    <motion.div
+    <Box
+      component={motion.form}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      exit={{ opacity: 0, y: -20 }}
+      onSubmit={handleSubmit}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+        maxWidth: 600,
+        mx: 'auto',
+        p: 3,
+        bgcolor: 'background.paper',
+        borderRadius: 2,
+        boxShadow: 3
+      }}
     >
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
+      {status.error && (
+        <Fade in>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {status.error}
+          </Alert>
+        </Fade>
+      )}
+
+      {status.submitted && status.message && (
+        <Fade in>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {status.message}
+          </Alert>
+        </Fade>
+      )}
+
+      <TextField
+        required
+        label="Name"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        disabled={status.submitting}
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 3,
-          width: '100%',
-          maxWidth: 600,
-          mx: 'auto',
-          p: 4,
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: status.error ? 'error.main' : 'divider',
-          bgcolor: '#0F172A',
-          position: 'relative',
-          overflow: 'hidden',
-          transition: 'all 0.3s ease',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            background: 'radial-gradient(circle at center, rgba(6, 182, 212, 0.05) 1px, transparent 1px)',
-            backgroundSize: '4px 4px',
-            opacity: 0,
-            transition: 'opacity 0.3s ease',
-          },
-          '&:hover::before': {
-            opacity: 1,
-          },
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
+
+      <TextField
+        required
+        label="Email"
+        name="email"
+        type="email"
+        value={formData.email}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
+
+      <TextField
+        label="Phone"
+        name="phone"
+        value={formData.phone}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
+
+      <TextField
+        label="Company"
+        name="company"
+        value={formData.company}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
+
+      <TextField
+        required
+        select
+        label="Service Type"
+        name="serviceType"
+        value={formData.serviceType}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
         }}
       >
-        <Typography
-          variant="h5"
-          sx={{
-            mb: 2,
-            background: 'linear-gradient(to right, #06B6D4, #0EA5E9)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textAlign: 'center'
-          }}
-        >
-          Request a Quote
-        </Typography>
+        <MenuItem value="Tool Grinding">Tool Grinding</MenuItem>
+        <MenuItem value="CNC Machining">CNC Machining</MenuItem>
+        <MenuItem value="EDM Services">EDM Services</MenuItem>
+        <MenuItem value="Custom Tooling">Custom Tooling</MenuItem>
+      </TextField>
 
-        {/* Form Status Messages */}
-        {status.error && (
-          <Fade in={!!status.error}>
-            <Alert 
-              severity="error" 
-              sx={{ 
-                mt: 2, 
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                color: '#ef4444',
-                '& .MuiAlert-icon': {
-                  color: '#ef4444'
-                }
-              }}
-            >
-              {status.error}
-            </Alert>
-          </Fade>
-        )}
-        
-        {status.submitted && (
-          <Fade in={status.submitted}>
-            <Alert 
-              severity="success"
-              sx={{ 
-                mt: 2,
-                backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                color: '#06b6d4',
-                '& .MuiAlert-icon': {
-                  color: '#06b6d4'
-                }
-              }}
-            >
-              {status.message}
-            </Alert>
-          </Fade>
-        )}
+      <TextField
+        label="Project Details"
+        name="projectDetails"
+        multiline
+        rows={4}
+        value={formData.projectDetails}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
 
-        {formFields.map((field) => (
-          <TextField
-            key={field.name}
-            name={field.name}
-            label={field.label}
-            value={formData[field.name]}
-            onChange={handleChange}
-            required={field.required}
-            type={field.type || 'text'}
-            multiline={field.multiline}
-            rows={field.rows}
-            select={field.select}
-            disabled={status.submitting}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: 'rgba(6, 182, 212, 0.2)',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'rgba(6, 182, 212, 0.4)',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#06B6D4',
-                },
-              },
-              '& .MuiInputLabel-root': {
-                color: 'rgba(255, 255, 255, 0.7)',
-                '&.Mui-focused': {
-                  color: '#06B6D4',
-                },
-              },
-              '& .MuiInputBase-input': {
-                color: 'white',
-              },
-            }}
-          >
-            {field.select && field.options.map((option) => (
-              <MenuItem 
-                key={option} 
-                value={option}
-                sx={{
-                  '&.Mui-selected': {
-                    bgcolor: 'rgba(6, 182, 212, 0.1) !important',
-                  },
-                  '&:hover': {
-                    bgcolor: 'rgba(6, 182, 212, 0.05)',
-                  }
-                }}
-              >
-                {option}
-              </MenuItem>
-            ))}
-          </TextField>
+      <TextField
+        select
+        label="Timeline"
+        name="timeline"
+        value={formData.timeline}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      >
+        {timelineOptions.map(option => (
+          <MenuItem key={option} value={option}>
+            {option}
+          </MenuItem>
         ))}
+      </TextField>
 
-        {/* Submit Button */}
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={status.submitting}
+      <TextField
+        select
+        label="Budget Range"
+        name="budgetRange"
+        value={formData.budgetRange}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      >
+        {budgetRangeOptions.map(option => (
+          <MenuItem key={option} value={option}>
+            {option}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <Button
+        type="submit"
+        variant="contained"
+        disabled={status.submitting}
+        sx={{
+          mt: 2,
+          py: 1.5,
+          bgcolor: '#06B6D4',
+          '&:hover': {
+            bgcolor: '#0891B2'
+          },
+          '&:disabled': {
+            bgcolor: 'rgba(6, 182, 212, 0.5)'
+          }
+        }}
+      >
+        {status.submitting ? (
+          <CircularProgress
+            size={24}
             sx={{
-              backgroundColor: '#06b6d4',
-              '&:hover': {
-                backgroundColor: '#0891b2'
-              },
-              '&:disabled': {
-                backgroundColor: 'rgba(6, 182, 212, 0.5)'
-              }
+              color: '#fff'
             }}
-          >
-            {status.submitting ? (
-              <CircularProgress 
-                size={24} 
-                sx={{ 
-                  color: 'white',
-                  opacity: 0.8
-                }} 
-              />
-            ) : (
-              'Submit Quote Request'
-            )}
-          </Button>
-        </Box>
-      </Box>
-    </motion.div>
+          />
+        ) : (
+          'Submit Quote Request'
+        )}
+      </Button>
+    </Box>
   );
 };
 

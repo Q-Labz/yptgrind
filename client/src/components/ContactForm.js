@@ -5,7 +5,6 @@ import {
   Button,
   Alert,
   CircularProgress,
-  Typography,
   Fade
 } from '@mui/material';
 import { motion } from 'framer-motion';
@@ -28,16 +27,13 @@ const ContactForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
+    // Validate required fields
     const errors = [];
     if (!formData.name) errors.push('Name is required');
     if (!formData.email) errors.push('Email is required');
@@ -60,7 +56,8 @@ const ContactForm = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
+        credentials: 'same-origin'
       });
 
       const data = await response.json();
@@ -96,250 +93,149 @@ const ContactForm = () => {
   };
 
   return (
-    <motion.div
+    <Box
+      component={motion.form}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      exit={{ opacity: 0, y: -20 }}
+      onSubmit={handleSubmit}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+        maxWidth: 600,
+        mx: 'auto',
+        p: 3,
+        bgcolor: 'background.paper',
+        borderRadius: 2,
+        boxShadow: 3
+      }}
     >
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
+      {status.error && (
+        <Fade in>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {status.error}
+          </Alert>
+        </Fade>
+      )}
+
+      {status.submitted && status.message && (
+        <Fade in>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {status.message}
+          </Alert>
+        </Fade>
+      )}
+
+      <TextField
+        required
+        label="Name"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        disabled={status.submitting}
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-          maxWidth: 600,
-          mx: 'auto',
-          p: 3,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: 2,
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
+
+      <TextField
+        required
+        label="Email"
+        name="email"
+        type="email"
+        value={formData.email}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
+
+      <TextField
+        label="Phone"
+        name="phone"
+        value={formData.phone}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
+
+      <TextField
+        label="Company"
+        name="company"
+        value={formData.company}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
+
+      <TextField
+        required
+        label="Message"
+        name="message"
+        multiline
+        rows={4}
+        value={formData.message}
+        onChange={handleChange}
+        disabled={status.submitting}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '&:hover fieldset': {
+              borderColor: '#06B6D4'
+            }
+          }
+        }}
+      />
+
+      <Button
+        type="submit"
+        variant="contained"
+        disabled={status.submitting}
+        sx={{
+          mt: 2,
+          py: 1.5,
+          bgcolor: '#06B6D4',
+          '&:hover': {
+            bgcolor: '#0891B2'
+          },
+          '&:disabled': {
+            bgcolor: 'rgba(6, 182, 212, 0.5)'
+          }
         }}
       >
-        <Typography 
-          variant="h4" 
-          component="h2" 
-          sx={{ 
-            mb: 3,
-            color: '#fff',
-            textAlign: 'center',
-            fontWeight: 600
-          }}
-        >
-          Contact Us
-        </Typography>
-
-        {/* Form Status Messages */}
-        {status.error && (
-          <Fade in={!!status.error}>
-            <Alert 
-              severity="error" 
-              sx={{ 
-                mt: 2, 
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                color: '#ef4444',
-                '& .MuiAlert-icon': {
-                  color: '#ef4444'
-                }
-              }}
-            >
-              {status.error}
-            </Alert>
-          </Fade>
-        )}
-        
-        {status.submitted && (
-          <Fade in={status.submitted}>
-            <Alert 
-              severity="success"
-              sx={{ 
-                mt: 2,
-                backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                color: '#06b6d4',
-                '& .MuiAlert-icon': {
-                  color: '#06b6d4'
-                }
-              }}
-            >
-              {status.message}
-            </Alert>
-          </Fade>
-        )}
-
-        {/* Form Fields */}
-        <TextField
-          required
-          name="name"
-          label="Name"
-          value={formData.name}
-          onChange={handleChange}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              color: '#fff',
-              '& fieldset': {
-                borderColor: 'rgba(255, 255, 255, 0.23)',
-              },
-              '&:hover fieldset': {
-                borderColor: '#06b6d4',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#06b6d4',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: 'rgba(255, 255, 255, 0.7)',
-              '&.Mui-focused': {
-                color: '#06b6d4',
-              },
-            },
-          }}
-        />
-
-        <TextField
-          required
-          name="email"
-          label="Email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              color: '#fff',
-              '& fieldset': {
-                borderColor: 'rgba(255, 255, 255, 0.23)',
-              },
-              '&:hover fieldset': {
-                borderColor: '#06b6d4',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#06b6d4',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: 'rgba(255, 255, 255, 0.7)',
-              '&.Mui-focused': {
-                color: '#06b6d4',
-              },
-            },
-          }}
-        />
-
-        <TextField
-          name="phone"
-          label="Phone (optional)"
-          value={formData.phone}
-          onChange={handleChange}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              color: '#fff',
-              '& fieldset': {
-                borderColor: 'rgba(255, 255, 255, 0.23)',
-              },
-              '&:hover fieldset': {
-                borderColor: '#06b6d4',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#06b6d4',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: 'rgba(255, 255, 255, 0.7)',
-              '&.Mui-focused': {
-                color: '#06b6d4',
-              },
-            },
-          }}
-        />
-
-        <TextField
-          name="company"
-          label="Company (optional)"
-          value={formData.company}
-          onChange={handleChange}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              color: '#fff',
-              '& fieldset': {
-                borderColor: 'rgba(255, 255, 255, 0.23)',
-              },
-              '&:hover fieldset': {
-                borderColor: '#06b6d4',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#06b6d4',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: 'rgba(255, 255, 255, 0.7)',
-              '&.Mui-focused': {
-                color: '#06b6d4',
-              },
-            },
-          }}
-        />
-
-        <TextField
-          required
-          name="message"
-          label="Message"
-          multiline
-          rows={4}
-          value={formData.message}
-          onChange={handleChange}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              color: '#fff',
-              '& fieldset': {
-                borderColor: 'rgba(255, 255, 255, 0.23)',
-              },
-              '&:hover fieldset': {
-                borderColor: '#06b6d4',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#06b6d4',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: 'rgba(255, 255, 255, 0.7)',
-              '&.Mui-focused': {
-                color: '#06b6d4',
-              },
-            },
-          }}
-        />
-
-        {/* Submit Button */}
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={status.submitting}
+        {status.submitting ? (
+          <CircularProgress
+            size={24}
             sx={{
-              backgroundColor: '#06b6d4',
-              '&:hover': {
-                backgroundColor: '#0891b2'
-              },
-              '&:disabled': {
-                backgroundColor: 'rgba(6, 182, 212, 0.5)'
-              }
+              color: '#fff'
             }}
-          >
-            {status.submitting ? (
-              <CircularProgress 
-                size={24} 
-                sx={{ 
-                  color: 'white',
-                  opacity: 0.8
-                }} 
-              />
-            ) : (
-              'Send Message'
-            )}
-          </Button>
-        </Box>
-      </Box>
-    </motion.div>
+          />
+        ) : (
+          'Send Message'
+        )}
+      </Button>
+    </Box>
   );
 };
 
