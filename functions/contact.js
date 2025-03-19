@@ -11,8 +11,11 @@ const allowedOrigins = [
 ];
 
 exports.handler = async (event, context) => {
+  console.log('Contact form submission received - Headers:', JSON.stringify(event.headers, null, 2));
+  
   // Get the request origin
   const origin = event.headers.origin || event.headers.Origin || '';
+  console.log('Request origin:', origin);
   
   // Set CORS headers based on origin
   const headers = {
@@ -23,6 +26,7 @@ exports.handler = async (event, context) => {
 
   // Handle preflight requests
   if (event.httpMethod === 'OPTIONS') {
+    console.log('Handling OPTIONS request');
     return {
       statusCode: 204,
       headers
@@ -31,6 +35,7 @@ exports.handler = async (event, context) => {
 
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
+    console.log('Invalid method:', event.httpMethod);
     return {
       statusCode: 405,
       headers,
@@ -39,7 +44,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    console.log('Contact form submission received:', event.body);
+    console.log('Processing contact form body:', event.body);
     const { name, email, phone, company, message } = JSON.parse(event.body);
     
     // Validate required fields
