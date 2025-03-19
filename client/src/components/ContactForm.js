@@ -9,9 +9,6 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
-// Use environment variable for API URL with fallback
-const API_URL = '/api/contact';
-
 const ContactForm = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -54,8 +51,8 @@ const ContactForm = () => {
     setStatus({ submitting: true, submitted: false, error: null });
 
     try {
-      console.log('Submitting to:', API_URL);
-      const response = await fetch(API_URL, {
+      console.log('Submitting contact form...');
+      const response = await fetch('/.netlify/functions/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,6 +67,7 @@ const ContactForm = () => {
       }
 
       const data = await response.json();
+      console.log('Contact form submission successful:', data);
 
       setStatus({
         submitting: false,
