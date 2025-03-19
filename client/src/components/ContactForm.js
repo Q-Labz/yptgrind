@@ -9,6 +9,10 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
+const API_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:9999/.netlify/functions/contact'
+  : '/.netlify/functions/contact';
+
 const ContactForm = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -51,8 +55,8 @@ const ContactForm = () => {
     setStatus({ submitting: true, submitted: false, error: null });
 
     try {
-      console.log('Submitting contact form...');
-      const response = await fetch('/.netlify/functions/contact', {
+      console.log('Submitting contact form to:', API_URL);
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
