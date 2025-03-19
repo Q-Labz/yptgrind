@@ -11,7 +11,7 @@ import {
 import { motion } from 'framer-motion';
 
 // Use environment variable for API URL with fallback
-const API_URL = `${process.env.REACT_APP_API_URL || ''}/.netlify/functions/quote`;
+const API_URL = '/.netlify/functions/quote';
 
 const serviceTypes = [
   'CNC Machining',
