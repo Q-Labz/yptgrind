@@ -6,6 +6,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  CI = "false"
 
 [dev]
   framework = "#custom"
@@ -16,17 +17,11 @@
   autoLaunch = true
 
 [[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = true
 
-[functions]
-  external_node_modules = ["@neondatabase/serverless"]
-  node_bundler = "esbuild"
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
