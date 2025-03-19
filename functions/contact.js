@@ -40,9 +40,14 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const client = await db.connect();
+    console.log('Attempting to connect to database...');
+    const client = await db.connect().catch(err => {
+      console.error('Database connection error:', err);
+      throw new Error(`Failed to connect to database: ${err.message}`);
+    });
 
     try {
+      console.log('Connected to database, creating/updating customer...');
       // Create or update customer
       const customerResult = await client.query(
         `INSERT INTO customers (name, email, phone, company)
@@ -53,14 +58,21 @@ exports.handler = async (event, context) => {
             company = COALESCE($4, customers.company)
         RETURNING id`,
         [name, email, phone || null, company || null]
-      );
+      ).catch(err => {
+        console.error('Customer query error:', err);
+        throw new Error(`Failed to create/update customer: ${err.message}`);
+      });
 
+      console.log('Customer created/updated, storing contact message...');
       // Store the contact message
       await client.query(
         `INSERT INTO contact_messages (customer_id, message)
         VALUES ($1, $2)`,
         [customerResult.rows[0].id, message]
-      );
+      ).catch(err => {
+        console.error('Contact message query error:', err);
+        throw new Error(`Failed to store contact message: ${err.message}`);
+      });
 
       console.log('Successfully processed contact form submission');
 
@@ -72,6 +84,7 @@ exports.handler = async (event, context) => {
         })
       };
     } finally {
+      console.log('Releasing database connection...');
       await client.release();
     }
   } catch (error) {

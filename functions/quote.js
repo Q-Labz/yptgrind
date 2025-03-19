@@ -49,9 +49,14 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const client = await db.connect();
+    console.log('Attempting to connect to database...');
+    const client = await db.connect().catch(err => {
+      console.error('Database connection error:', err);
+      throw new Error(`Failed to connect to database: ${err.message}`);
+    });
 
     try {
+      console.log('Connected to database, creating/updating customer...');
       // Create or update customer
       const customerResult = await client.query(
         `INSERT INTO customers (name, email, phone, company)
@@ -62,8 +67,12 @@ exports.handler = async (event, context) => {
             company = COALESCE($4, customers.company)
         RETURNING id`,
         [name, email, phone || null, company || null]
-      );
+      ).catch(err => {
+        console.error('Customer query error:', err);
+        throw new Error(`Failed to create/update customer: ${err.message}`);
+      });
 
+      console.log('Customer created/updated, storing quote request...');
       // Store the quote request
       await client.query(
         `INSERT INTO quote_requests (
@@ -80,7 +89,10 @@ exports.handler = async (event, context) => {
           timeline || null,
           budgetRange || null
         ]
-      );
+      ).catch(err => {
+        console.error('Quote request query error:', err);
+        throw new Error(`Failed to store quote request: ${err.message}`);
+      });
 
       console.log('Successfully processed quote request');
 
@@ -92,6 +104,7 @@ exports.handler = async (event, context) => {
         })
       };
     } finally {
+      console.log('Releasing database connection...');
       await client.release();
     }
   } catch (error) {
