@@ -9,6 +9,10 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
+const API_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:8888/.netlify/functions/contact'
+  : '/.netlify/functions/contact';
+
 const ContactForm = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -51,20 +55,21 @@ const ContactForm = () => {
     setStatus({ submitting: true, submitted: false, error: null });
 
     try {
-      const response = await fetch('/.netlify/functions/contact', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(formData),
-        credentials: 'same-origin'
+        body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.details || data.error || 'Failed to send message');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || `HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
 
       setStatus({
         submitting: false,
@@ -83,11 +88,11 @@ const ContactForm = () => {
       });
 
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('Error submitting form:', error);
       setStatus({
         submitting: false,
         submitted: false,
-        error: error.message
+        error: error.message || 'Failed to send message. Please try again.'
       });
     }
   };

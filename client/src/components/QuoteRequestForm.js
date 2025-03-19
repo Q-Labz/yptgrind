@@ -10,6 +10,34 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
+const API_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:8888/.netlify/functions/quote'
+  : '/.netlify/functions/quote';
+
+const serviceTypes = [
+  'CNC Machining',
+  'Precision Grinding',
+  'Wire EDM',
+  'Prototyping',
+  'Production Run',
+  'Other'
+];
+
+const timelineOptions = [
+  'Urgent (1-2 weeks)',
+  'Standard (2-4 weeks)',
+  'Flexible (4+ weeks)',
+  'Not sure yet'
+];
+
+const budgetRanges = [
+  'Under $1,000',
+  '$1,000 - $5,000',
+  '$5,000 - $10,000',
+  '$10,000+',
+  'Not sure yet'
+];
+
 const QuoteRequestForm = ({ onClose, initialService }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -28,23 +56,6 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
     error: null,
     message: null
   });
-
-  const timelineOptions = [
-    'Immediate',
-    'Within 1 week',
-    'Within 1 month',
-    'Within 3 months',
-    'Flexible'
-  ];
-
-  const budgetRangeOptions = [
-    'Under $1,000',
-    '$1,000 - $5,000',
-    '$5,000 - $10,000',
-    '$10,000 - $50,000',
-    'Over $50,000',
-    'To be discussed'
-  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,20 +83,21 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
     setStatus({ submitting: true, submitted: false, error: null });
 
     try {
-      const response = await fetch('/.netlify/functions/quote', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(formData),
-        credentials: 'same-origin'
+        body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.details || data.error || 'Failed to submit quote request');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || `HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
 
       setStatus({
         submitting: false,
@@ -112,11 +124,11 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
       }, 2000);
 
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('Error submitting form:', error);
       setStatus({
         submitting: false,
         submitted: false,
-        error: error.message
+        error: error.message || 'Failed to submit quote request. Please try again.'
       });
     }
   };
@@ -235,10 +247,11 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
           }
         }}
       >
-        <MenuItem value="Tool Grinding">Tool Grinding</MenuItem>
-        <MenuItem value="CNC Machining">CNC Machining</MenuItem>
-        <MenuItem value="EDM Services">EDM Services</MenuItem>
-        <MenuItem value="Custom Tooling">Custom Tooling</MenuItem>
+        {serviceTypes.map(option => (
+          <MenuItem key={option} value={option}>
+            {option}
+          </MenuItem>
+        ))}
       </TextField>
 
       <TextField
@@ -295,7 +308,7 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
           }
         }}
       >
-        {budgetRangeOptions.map(option => (
+        {budgetRanges.map(option => (
           <MenuItem key={option} value={option}>
             {option}
           </MenuItem>
