@@ -6,8 +6,6 @@ const pool = new Pool({
   }
 });
 
-const { db } = require('@vercel/postgres');
-
 exports.handler = async (event, context) => {
   // Set CORS headers for development
   const headers = {
@@ -36,9 +34,11 @@ exports.handler = async (event, context) => {
   try {
     console.log('Received contact form submission');
     const { name, email, phone, company, message } = JSON.parse(event.body);
+    console.log('Form data:', { name, email, phone, company, message });
 
     // Validate required fields
     if (!name || !email || !message) {
+      console.log('Missing required fields');
       return {
         statusCode: 400,
         headers,
@@ -65,6 +65,10 @@ exports.handler = async (event, context) => {
       [name, email, phone || null, company || null]
     );
 
+    if (!customerResult.rows[0]) {
+      throw new Error('Failed to create or update customer');
+    }
+
     console.log('Customer created/updated, storing contact message...');
     // Store the contact message
     await client.query(
@@ -85,6 +89,19 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Error processing contact form:', error);
+    console.error('Error stack:', error.stack);
+
+    // Check if it's a database connection error
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      return {
+        statusCode: 503,
+        headers,
+        body: JSON.stringify({
+          error: 'Database connection error',
+          details: 'Unable to connect to the database. Please try again later.'
+        })
+      };
+    }
 
     return {
       statusCode: 500,
@@ -97,7 +114,11 @@ exports.handler = async (event, context) => {
   } finally {
     if (client) {
       console.log('Releasing database connection...');
-      client.release();
+      try {
+        await client.release();
+      } catch (releaseError) {
+        console.error('Error releasing client:', releaseError);
+      }
     }
   }
 };
