@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { db } from '@vercel/postgres';
 
 export const handler = async (event, context) => {
   // Set CORS headers for development
@@ -40,33 +40,40 @@ export const handler = async (event, context) => {
       };
     }
 
-    // Create or update customer
-    const customer = await sql`
-      INSERT INTO customers (name, email, phone, company)
-      VALUES (${name}, ${email}, ${phone || null}, ${company || null})
-      ON CONFLICT (email) DO UPDATE
-      SET name = ${name},
-          phone = COALESCE(${phone || null}, customers.phone),
-          company = COALESCE(${company || null}, customers.company)
-      RETURNING id;
-    `;
+    const client = await db.connect();
 
-    // Store the contact message
-    await sql`
-      INSERT INTO contact_messages (customer_id, message)
-      VALUES (${customer[0].id}, ${message});
-    `;
+    try {
+      // Create or update customer
+      const customerResult = await client.query(
+        `INSERT INTO customers (name, email, phone, company)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (email) DO UPDATE
+        SET name = $1,
+            phone = COALESCE($3, customers.phone),
+            company = COALESCE($4, customers.company)
+        RETURNING id`,
+        [name, email, phone || null, company || null]
+      );
 
-    console.log('Successfully processed contact form submission');
+      // Store the contact message
+      await client.query(
+        `INSERT INTO contact_messages (customer_id, message)
+        VALUES ($1, $2)`,
+        [customerResult.rows[0].id, message]
+      );
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        message: 'Thank you for your message. We will get back to you soon!'
-      })
-    };
+      console.log('Successfully processed contact form submission');
 
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          message: 'Thank you for your message. We will get back to you soon!'
+        })
+      };
+    } finally {
+      await client.release();
+    }
   } catch (error) {
     console.error('Error processing contact form:', error);
 
