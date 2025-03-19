@@ -11,7 +11,7 @@ import {
 import { motion } from 'framer-motion';
 
 // Use environment variable for API URL with fallback
-const API_URL = '/.netlify/functions/quote';
+const API_URL = '/api/quote';
 
 const serviceTypes = [
   'CNC Machining',
@@ -82,7 +82,6 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
     setStatus({ submitting: true, submitted: false, error: null });
 
     try {
-      console.log('Submitting to:', API_URL);
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {

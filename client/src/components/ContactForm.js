@@ -10,7 +10,7 @@ import {
 import { motion } from 'framer-motion';
 
 // Use environment variable for API URL with fallback
-const API_URL = '/.netlify/functions/contact';
+const API_URL = '/api/contact';
 
 const ContactForm = () => {
   const [formData, setFormData] = useState({
