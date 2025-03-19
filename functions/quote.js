@@ -1,41 +1,22 @@
-const { neon } = require('@neondatabase/serverless');
-require('dotenv').config();
+import { sql } from '@vercel/postgres';
 
-const sql = neon(process.env.DATABASE_URL);
-
-// Allow both local development and production URLs
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3005',
-  'https://yptgrind.netlify.app'
-];
-
-exports.handler = async (event, context) => {
-  console.log('Quote request received - Headers:', JSON.stringify(event.headers, null, 2));
-  
-  // Get the request origin
-  const origin = event.headers.origin || event.headers.Origin || '';
-  console.log('Request origin:', origin);
-  
-  // Set CORS headers based on origin
+export const handler = async (event, context) => {
+  // Set CORS headers for development
   const headers = {
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : allowedOrigins[0]
+    'Access-Control-Allow-Origin': process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://yptgrind.netlify.app',
+    'Access-Control-Allow-Headers': 'Content-Type, Accept',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
   // Handle preflight requests
   if (event.httpMethod === 'OPTIONS') {
-    console.log('Handling OPTIONS request');
     return {
       statusCode: 204,
       headers
     };
   }
 
-  // Only allow POST requests
   if (event.httpMethod !== 'POST') {
-    console.log('Invalid method:', event.httpMethod);
     return {
       statusCode: 405,
       headers,
@@ -44,16 +25,24 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    console.log('Processing quote request body:', event.body);
-    const { name, email, phone, company, serviceType, projectDetails, timeline, budgetRange } = JSON.parse(event.body);
-    
+    console.log('Received quote request submission');
+    const { 
+      name, 
+      email, 
+      phone, 
+      company, 
+      serviceType,
+      projectDetails,
+      timeline,
+      budgetRange
+    } = JSON.parse(event.body);
+
     // Validate required fields
     if (!name || !email || !serviceType) {
-      console.log('Validation failed:', { name, email, serviceType });
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           error: 'Missing required fields',
           details: 'Name, email, and service type are required'
         })
@@ -61,7 +50,6 @@ exports.handler = async (event, context) => {
     }
 
     // Create or update customer
-    console.log('Creating/updating customer...');
     const customer = await sql`
       INSERT INTO customers (name, email, phone, company)
       VALUES (${name}, ${email}, ${phone || null}, ${company || null})
@@ -71,10 +59,8 @@ exports.handler = async (event, context) => {
           company = COALESCE(${company || null}, customers.company)
       RETURNING id;
     `;
-    console.log('Customer created/updated:', customer);
 
-    // Create quote request
-    console.log('Creating quote request...');
+    // Store the quote request
     await sql`
       INSERT INTO quote_requests (
         customer_id,
@@ -90,23 +76,25 @@ exports.handler = async (event, context) => {
         ${budgetRange || null}
       );
     `;
-    console.log('Quote request created successfully');
+
+    console.log('Successfully processed quote request');
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        success: true,
-        message: 'Quote request submitted successfully! We\'ll be in touch soon.'
+      body: JSON.stringify({
+        message: 'Thank you for your quote request. We will get back to you soon!'
       })
     };
+
   } catch (error) {
-    console.error('Quote request error:', error);
+    console.error('Error processing quote request:', error);
+
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: 'Failed to submit quote request',
+      body: JSON.stringify({
+        error: 'Internal server error',
         details: error.message
       })
     };
