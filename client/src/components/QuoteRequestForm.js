@@ -5,8 +5,11 @@ import {
   Button,
   Alert,
   CircularProgress,
+  Fade,
   MenuItem,
-  Fade
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
@@ -23,28 +26,22 @@ const serviceTypes = [
   'Other'
 ];
 
-const timelineOptions = [
-  'Urgent (1-2 weeks)',
-  'Standard (2-4 weeks)',
-  'Flexible (4+ weeks)',
-  'Not sure yet'
-];
-
 const budgetRanges = [
   'Under $1,000',
   '$1,000 - $5,000',
   '$5,000 - $10,000',
-  '$10,000+',
-  'Not sure yet'
+  '$10,000 - $50,000',
+  'Over $50,000',
+  'Not Sure'
 ];
 
-const QuoteRequestForm = ({ onClose, initialService }) => {
+const QuoteRequestForm = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     company: '',
-    serviceType: initialService || '',
+    serviceType: '',
     projectDetails: '',
     timeline: '',
     budgetRange: ''
@@ -84,6 +81,8 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
 
     try {
       console.log('Submitting quote request to:', API_URL);
+      console.log('Form data:', formData);
+      
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -93,19 +92,22 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
         body: JSON.stringify(formData)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.details || errorData.error || `HTTP error! status: ${response.status}`);
-      }
+      const responseData = await response.json().catch(() => ({
+        error: 'Failed to parse response',
+        details: 'Invalid JSON response from server'
+      }));
 
-      const data = await response.json();
-      console.log('Quote request submission successful:', data);
+      console.log('Server response:', responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.details || responseData.error || `HTTP error! status: ${response.status}`);
+      }
 
       setStatus({
         submitting: false,
         submitted: true,
         error: null,
-        message: data.message || 'Quote request submitted successfully'
+        message: responseData.message || 'Quote request sent successfully'
       });
 
       // Clear form after successful submission
@@ -120,17 +122,12 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
         budgetRange: ''
       });
 
-      // Close modal after 2 seconds on success
-      setTimeout(() => {
-        if (onClose) onClose();
-      }, 2000);
-
     } catch (error) {
       console.error('Error submitting form:', error);
       setStatus({
         submitting: false,
         submitted: false,
-        error: error.message || 'Failed to submit quote request. Please try again.'
+        error: error.message || 'Failed to send quote request. Please try again.'
       });
     }
   };
@@ -233,28 +230,27 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
         }}
       />
 
-      <TextField
-        required
-        select
-        label="Service Type"
-        name="serviceType"
-        value={formData.serviceType}
-        onChange={handleChange}
-        disabled={status.submitting}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            '&:hover fieldset': {
+      <FormControl required>
+        <InputLabel>Service Type</InputLabel>
+        <Select
+          name="serviceType"
+          value={formData.serviceType}
+          onChange={handleChange}
+          disabled={status.submitting}
+          label="Service Type"
+          sx={{
+            '&:hover .MuiOutlinedInput-notchedOutline': {
               borderColor: '#06B6D4'
             }
-          }
-        }}
-      >
-        {serviceTypes.map(option => (
-          <MenuItem key={option} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </TextField>
+          }}
+        >
+          {serviceTypes.map(type => (
+            <MenuItem key={type} value={type}>
+              {type}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
       <TextField
         label="Project Details"
@@ -274,7 +270,6 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
       />
 
       <TextField
-        select
         label="Timeline"
         name="timeline"
         value={formData.timeline}
@@ -287,61 +282,45 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
             }
           }
         }}
-      >
-        {timelineOptions.map(option => (
-          <MenuItem key={option} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </TextField>
+      />
 
-      <TextField
-        select
-        label="Budget Range"
-        name="budgetRange"
-        value={formData.budgetRange}
-        onChange={handleChange}
-        disabled={status.submitting}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            '&:hover fieldset': {
+      <FormControl>
+        <InputLabel>Budget Range</InputLabel>
+        <Select
+          name="budgetRange"
+          value={formData.budgetRange}
+          onChange={handleChange}
+          disabled={status.submitting}
+          label="Budget Range"
+          sx={{
+            '&:hover .MuiOutlinedInput-notchedOutline': {
               borderColor: '#06B6D4'
             }
-          }
-        }}
-      >
-        {budgetRanges.map(option => (
-          <MenuItem key={option} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </TextField>
+          }}
+        >
+          {budgetRanges.map(range => (
+            <MenuItem key={range} value={range}>
+              {range}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
       <Button
         type="submit"
         variant="contained"
         disabled={status.submitting}
         sx={{
-          mt: 2,
-          py: 1.5,
           bgcolor: '#06B6D4',
           '&:hover': {
             bgcolor: '#0891B2'
-          },
-          '&:disabled': {
-            bgcolor: 'rgba(6, 182, 212, 0.5)'
           }
         }}
       >
         {status.submitting ? (
-          <CircularProgress
-            size={24}
-            sx={{
-              color: '#fff'
-            }}
-          />
+          <CircularProgress size={24} sx={{ color: 'white' }} />
         ) : (
-          'Submit Quote Request'
+          'Request Quote'
         )}
       </Button>
     </Box>

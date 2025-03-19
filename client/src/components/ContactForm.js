@@ -56,6 +56,8 @@ const ContactForm = () => {
 
     try {
       console.log('Submitting contact form to:', API_URL);
+      console.log('Form data:', formData);
+      
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -65,19 +67,22 @@ const ContactForm = () => {
         body: JSON.stringify(formData)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.details || errorData.error || `HTTP error! status: ${response.status}`);
-      }
+      const responseData = await response.json().catch(() => ({
+        error: 'Failed to parse response',
+        details: 'Invalid JSON response from server'
+      }));
 
-      const data = await response.json();
-      console.log('Contact form submission successful:', data);
+      console.log('Server response:', responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.details || responseData.error || `HTTP error! status: ${response.status}`);
+      }
 
       setStatus({
         submitting: false,
         submitted: true,
         error: null,
-        message: data.message || 'Message sent successfully'
+        message: responseData.message || 'Message sent successfully'
       });
 
       // Clear form after successful submission
