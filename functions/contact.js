@@ -1,3 +1,11 @@
+const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
 const { db } = require('@vercel/postgres');
 
 exports.handler = async (event, context) => {
@@ -24,6 +32,7 @@ exports.handler = async (event, context) => {
     };
   }
 
+  let client;
   try {
     console.log('Received contact form submission');
     const { name, email, phone, company, message } = JSON.parse(event.body);
@@ -41,52 +50,39 @@ exports.handler = async (event, context) => {
     }
 
     console.log('Attempting to connect to database...');
-    const client = await db.connect().catch(err => {
-      console.error('Database connection error:', err);
-      throw new Error(`Failed to connect to database: ${err.message}`);
-    });
+    client = await pool.connect();
 
-    try {
-      console.log('Connected to database, creating/updating customer...');
-      // Create or update customer
-      const customerResult = await client.query(
-        `INSERT INTO customers (name, email, phone, company)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (email) DO UPDATE
-        SET name = $1,
-            phone = COALESCE($3, customers.phone),
-            company = COALESCE($4, customers.company)
-        RETURNING id`,
-        [name, email, phone || null, company || null]
-      ).catch(err => {
-        console.error('Customer query error:', err);
-        throw new Error(`Failed to create/update customer: ${err.message}`);
-      });
+    console.log('Connected to database, creating/updating customer...');
+    // Create or update customer
+    const customerResult = await client.query(
+      `INSERT INTO customers (name, email, phone, company)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (email) DO UPDATE
+      SET name = $1,
+          phone = COALESCE($3, customers.phone),
+          company = COALESCE($4, customers.company)
+      RETURNING id`,
+      [name, email, phone || null, company || null]
+    );
 
-      console.log('Customer created/updated, storing contact message...');
-      // Store the contact message
-      await client.query(
-        `INSERT INTO contact_messages (customer_id, message)
-        VALUES ($1, $2)`,
-        [customerResult.rows[0].id, message]
-      ).catch(err => {
-        console.error('Contact message query error:', err);
-        throw new Error(`Failed to store contact message: ${err.message}`);
-      });
+    console.log('Customer created/updated, storing contact message...');
+    // Store the contact message
+    await client.query(
+      `INSERT INTO contact_messages (customer_id, message)
+      VALUES ($1, $2)`,
+      [customerResult.rows[0].id, message]
+    );
 
-      console.log('Successfully processed contact form submission');
+    console.log('Successfully processed contact form submission');
 
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          message: 'Thank you for your message. We will get back to you soon!'
-        })
-      };
-    } finally {
-      console.log('Releasing database connection...');
-      await client.release();
-    }
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        message: 'Thank you for your message. We will get back to you soon!'
+      })
+    };
+
   } catch (error) {
     console.error('Error processing contact form:', error);
 
@@ -98,5 +94,10 @@ exports.handler = async (event, context) => {
         details: error.message
       })
     };
+  } finally {
+    if (client) {
+      console.log('Releasing database connection...');
+      client.release();
+    }
   }
 };
