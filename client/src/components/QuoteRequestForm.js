@@ -10,9 +10,8 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
-const API_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:8888/.netlify/functions/quote'
-  : '/.netlify/functions/quote';
+// Use environment variable for API URL with fallback
+const API_URL = `${process.env.REACT_APP_API_URL || ''}/.netlify/functions/quote`;
 
 const serviceTypes = [
   'CNC Machining',
@@ -83,6 +82,7 @@ const QuoteRequestForm = ({ onClose, initialService }) => {
     setStatus({ submitting: true, submitted: false, error: null });
 
     try {
+      console.log('Submitting to:', API_URL);
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {

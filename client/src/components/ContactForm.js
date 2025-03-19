@@ -9,9 +9,8 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
-const API_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:8888/.netlify/functions/contact'
-  : '/.netlify/functions/contact';
+// Use environment variable for API URL with fallback
+const API_URL = `${process.env.REACT_APP_API_URL || ''}/.netlify/functions/contact`;
 
 const ContactForm = () => {
   const [formData, setFormData] = useState({
@@ -55,6 +54,7 @@ const ContactForm = () => {
     setStatus({ submitting: true, submitted: false, error: null });
 
     try {
+      console.log('Submitting to:', API_URL);
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
