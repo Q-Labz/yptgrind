@@ -8,11 +8,12 @@
   NODE_VERSION = "18"
 
 [dev]
+  framework = "#custom"
   command = "cd client && npm start"
   port = 8888
   targetPort = 3000
   publish = "client/build"
-  framework = "#custom"
+  autoLaunch = true
 
 [[redirects]]
   from = "/api/*"
