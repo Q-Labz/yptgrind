@@ -1,6 +1,6 @@
-import { db } from '@vercel/postgres';
+const { db } = require('@vercel/postgres');
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // Set CORS headers for development
   const headers = {
     'Access-Control-Allow-Origin': process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://yptgrind.netlify.app',
