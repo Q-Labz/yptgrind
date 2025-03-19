@@ -9,9 +9,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
-const API_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:9999/.netlify/functions/contact'
-  : '/.netlify/functions/contact';
+const API_URL = process.env.REACT_APP_API_URL || '/.netlify/functions';
 
 const ContactForm = () => {
   const [formData, setFormData] = useState({
@@ -32,6 +30,10 @@ const ContactForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear errors when user starts typing
+    if (status.error) {
+      setStatus(prev => ({ ...prev, error: null }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -39,9 +41,15 @@ const ContactForm = () => {
     
     // Validate required fields
     const errors = [];
-    if (!formData.name) errors.push('Name is required');
-    if (!formData.email) errors.push('Email is required');
-    if (!formData.message) errors.push('Message is required');
+    if (!formData.name.trim()) errors.push('Name is required');
+    if (!formData.email.trim()) errors.push('Email is required');
+    if (!formData.message.trim()) errors.push('Message is required');
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email.trim() && !emailRegex.test(formData.email)) {
+      errors.push('Please enter a valid email address');
+    }
 
     if (errors.length > 0) {
       setStatus({
@@ -55,10 +63,10 @@ const ContactForm = () => {
     setStatus({ submitting: true, submitted: false, error: null });
 
     try {
-      console.log('Submitting contact form to:', API_URL);
+      console.log('Submitting contact form to:', `${API_URL}/contact`);
       console.log('Form data:', formData);
       
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,15 +75,18 @@ const ContactForm = () => {
         body: JSON.stringify(formData)
       });
 
-      const responseData = await response.json().catch(() => ({
-        error: 'Failed to parse response',
-        details: 'Invalid JSON response from server'
-      }));
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Failed to parse server response. Please try again.');
+      }
 
       console.log('Server response:', responseData);
 
       if (!response.ok) {
-        throw new Error(responseData.details || responseData.error || `HTTP error! status: ${response.status}`);
+        throw new Error(responseData.details || responseData.error || `Request failed with status ${response.status}`);
       }
 
       setStatus({
@@ -146,12 +157,13 @@ const ContactForm = () => {
         value={formData.name}
         onChange={handleChange}
         disabled={status.submitting}
+        error={status.error?.includes('Name')}
         sx={{
           '& .MuiOutlinedInput-root': {
             '&:hover fieldset': {
-              borderColor: '#06B6D4'
-            }
-          }
+              borderColor: 'primary.main',
+            },
+          },
         }}
       />
 
@@ -163,12 +175,13 @@ const ContactForm = () => {
         value={formData.email}
         onChange={handleChange}
         disabled={status.submitting}
+        error={status.error?.includes('email')}
         sx={{
           '& .MuiOutlinedInput-root': {
             '&:hover fieldset': {
-              borderColor: '#06B6D4'
-            }
-          }
+              borderColor: 'primary.main',
+            },
+          },
         }}
       />
 
@@ -181,9 +194,9 @@ const ContactForm = () => {
         sx={{
           '& .MuiOutlinedInput-root': {
             '&:hover fieldset': {
-              borderColor: '#06B6D4'
-            }
-          }
+              borderColor: 'primary.main',
+            },
+          },
         }}
       />
 
@@ -196,9 +209,9 @@ const ContactForm = () => {
         sx={{
           '& .MuiOutlinedInput-root': {
             '&:hover fieldset': {
-              borderColor: '#06B6D4'
-            }
-          }
+              borderColor: 'primary.main',
+            },
+          },
         }}
       />
 
@@ -211,12 +224,13 @@ const ContactForm = () => {
         value={formData.message}
         onChange={handleChange}
         disabled={status.submitting}
+        error={status.error?.includes('Message')}
         sx={{
           '& .MuiOutlinedInput-root': {
             '&:hover fieldset': {
-              borderColor: '#06B6D4'
-            }
-          }
+              borderColor: 'primary.main',
+            },
+          },
         }}
       />
 
@@ -226,23 +240,28 @@ const ContactForm = () => {
         disabled={status.submitting}
         sx={{
           mt: 2,
-          py: 1.5,
-          bgcolor: '#06B6D4',
+          position: 'relative',
+          bgcolor: 'primary.main',
+          color: 'white',
           '&:hover': {
-            bgcolor: '#0891B2'
+            bgcolor: 'primary.dark',
           },
-          '&:disabled': {
-            bgcolor: 'rgba(6, 182, 212, 0.5)'
-          }
         }}
       >
         {status.submitting ? (
-          <CircularProgress
-            size={24}
-            sx={{
-              color: '#fff'
-            }}
-          />
+          <>
+            <CircularProgress
+              size={24}
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                marginTop: '-12px',
+                marginLeft: '-12px',
+              }}
+            />
+            Sending...
+          </>
         ) : (
           'Send Message'
         )}

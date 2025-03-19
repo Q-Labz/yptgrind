@@ -11,7 +11,8 @@ exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://yptgrind.netlify.app',
     'Access-Control-Allow-Headers': 'Content-Type, Accept',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type': 'application/json'
   };
 
   // Handle preflight requests
@@ -33,18 +34,34 @@ exports.handler = async (event, context) => {
   let client;
   try {
     console.log('Received contact form submission');
-    const { name, email, phone, company, message } = JSON.parse(event.body);
-    console.log('Form data:', { name, email, phone, company, message });
+    const body = JSON.parse(event.body);
+    console.log('Parsed request body:', body);
+
+    const { name, email, phone, company, message } = body;
 
     // Validate required fields
     if (!name || !email || !message) {
-      console.log('Missing required fields');
+      console.log('Missing required fields:', { name, email, message });
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           error: 'Missing required fields',
           details: 'Name, email, and message are required'
+        })
+      };
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.log('Invalid email format:', email);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'Invalid email format',
+          details: 'Please provide a valid email address'
         })
       };
     }
@@ -99,6 +116,18 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({
           error: 'Database connection error',
           details: 'Unable to connect to the database. Please try again later.'
+        })
+      };
+    }
+
+    // Check if it's a JSON parsing error
+    if (error instanceof SyntaxError && error.message.includes('JSON')) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'Invalid request format',
+          details: 'Request body must be valid JSON'
         })
       };
     }
