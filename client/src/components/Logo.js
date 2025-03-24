@@ -17,7 +17,7 @@ const Logo = ({ height = 40, sx = {} }) => {
     >
       <Box
         component={motion.img}
-        src="/logo.png"
+        src="https://raw.githubusercontent.com/Q-Labz/yptgrind/main/client/src/assets/logo.png"
         alt="Young's Precision Tool Grinding"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -25,7 +25,8 @@ const Logo = ({ height = 40, sx = {} }) => {
         sx={{
           height: height,
           width: 'auto',
-          objectFit: 'contain'
+          objectFit: 'contain',
+          filter: 'brightness(0) invert(1)' // Make the logo white
         }}
       />
     </Box>
