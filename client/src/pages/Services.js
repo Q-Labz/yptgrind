@@ -301,7 +301,7 @@ const Services = () => {
       <PageHeader
         title="Our Services"
         subtitle="Precision Tool Grinding & Custom Manufacturing Solutions"
-        image="/images/machine-shop-services.jpg"
+        image="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1600&auto=format&fit=crop&q=80"
       />
       <Container maxWidth="lg">
         <AnimatedSection>

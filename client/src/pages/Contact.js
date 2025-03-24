@@ -98,7 +98,7 @@ const Contact = () => {
       <PageHeader
         title="Contact Us"
         subtitle="Get in Touch for Custom Tool Solutions"
-        image="https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=1600&auto=format&fit=crop&q=80"
+        image="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1600&auto=format&fit=crop&q=80"
       />
       <Container sx={{ py: 8 }}>
         <AnimatedSection>

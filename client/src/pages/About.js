@@ -292,7 +292,7 @@ const About = () => {
       <PageHeader
         title="About Young's Precision"
         subtitle="Over 45 Years of Excellence in Precision Tool Grinding"
-        image="/images/machine-shop-about.jpg"
+        image="https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=1600&auto=format&fit=crop&q=80"
       />
       <Container maxWidth="lg" sx={{ py: 8 }}>
         <AnimatedSection>
