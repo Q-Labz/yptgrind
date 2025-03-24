@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import logoImage from '../assets/images/logo.svg';
 
 const Logo = ({ height = 40, sx = {} }) => {
   return (
@@ -15,23 +16,20 @@ const Logo = ({ height = 40, sx = {} }) => {
         ...sx
       }}
     >
-      <Typography
-        variant="h4"
-        component={motion.div}
+      <Box
+        component={motion.img}
+        src={logoImage}
+        alt="Young's Precision Tool Grinding"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         sx={{
-          fontWeight: 700,
-          background: 'linear-gradient(45deg, #06B6D4, #0EA5E9)',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          color: 'transparent',
-          letterSpacing: '.1rem',
+          height: height,
+          width: 'auto',
+          objectFit: 'contain',
+          filter: 'brightness(0) invert(1)', // Make the logo white
         }}
-      >
-        YOUNG'S
-      </Typography>
+      />
     </Box>
   );
 };
