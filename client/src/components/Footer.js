@@ -4,7 +4,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
-import { motion } from 'framer-motion';
+import Logo from './Logo';
 
 const socialLinks = [
   { icon: LinkedInIcon, url: 'https://linkedin.com', label: 'LinkedIn' },
@@ -51,147 +51,139 @@ const Footer = () => {
     >
       <Container maxWidth="lg" sx={{ py: 8 }}>
         <Grid container spacing={4}>
-          {/* Company Info */}
+          {/* Logo and Description */}
           <Grid item xs={12} md={4}>
-            <Typography
-              variant="h6"
-              component={RouterLink}
-              to="/"
-              sx={{
-                color: 'white',
-                textDecoration: 'none',
-                fontWeight: 700,
-                letterSpacing: '.1rem',
-                mb: 2,
-                display: 'inline-block',
-              }}
-            >
-              YOUNG'S PRECISION
-            </Typography>
+            <Box sx={{ mb: 3 }}>
+              <Logo height={60} />
+            </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Expert tool and cutter grinding services, delivering precision and quality since 1985.
+              Over 45 years of excellence in precision tool grinding and manufacturing solutions.
             </Typography>
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
               {socialLinks.map((social) => (
-                <motion.span
+                <IconButton
                   key={social.label}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <IconButton
-                    component="a"
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={social.label}
-                    sx={{
+                  component={Link}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': {
                       color: 'primary.main',
-                      mr: 1,
-                      '&:hover': {
-                        color: 'primary.light',
-                        bgcolor: 'rgba(6, 182, 212, 0.1)',
-                      },
-                    }}
-                  >
-                    <social.icon />
-                  </IconButton>
-                </motion.span>
+                    },
+                  }}
+                >
+                  <social.icon />
+                </IconButton>
               ))}
             </Box>
           </Grid>
 
-          {/* Links */}
+          {/* Footer Links */}
           {footerLinks.map((section) => (
             <Grid item xs={12} sm={6} md={2} key={section.title}>
               <Typography
                 variant="subtitle1"
                 color="text.primary"
-                gutterBottom
-                sx={{ fontWeight: 600 }}
+                sx={{ mb: 2, fontWeight: 'bold' }}
               >
                 {section.title}
               </Typography>
-              {section.items.map((item) => (
-                <motion.div
-                  key={item.name}
-                  whileHover={{ x: 5 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Link
-                    component={RouterLink}
-                    to={item.path}
-                    sx={{
-                      color: 'text.secondary',
-                      display: 'block',
-                      mb: 1,
-                      textDecoration: 'none',
-                      '&:hover': {
-                        color: 'primary.main',
-                      },
-                    }}
+              <Box
+                component="ul"
+                sx={{
+                  m: 0,
+                  p: 0,
+                  listStyle: 'none',
+                }}
+              >
+                {section.items.map((item) => (
+                  <Box
+                    component="li"
+                    key={item.name}
+                    sx={{ mb: 1 }}
                   >
-                    {item.name}
-                  </Link>
-                </motion.div>
-              ))}
+                    <Link
+                      component={RouterLink}
+                      to={item.path}
+                      sx={{
+                        color: 'text.secondary',
+                        textDecoration: 'none',
+                        '&:hover': {
+                          color: 'primary.main',
+                          textDecoration: 'none',
+                        },
+                      }}
+                    >
+                      {item.name}
+                    </Link>
+                  </Box>
+                ))}
+              </Box>
             </Grid>
           ))}
 
-          {/* Contact Info */}
+          {/* Contact Information */}
           <Grid item xs={12} sm={6} md={2}>
             <Typography
               variant="subtitle1"
               color="text.primary"
-              gutterBottom
-              sx={{ fontWeight: 600 }}
+              sx={{ mb: 2, fontWeight: 'bold' }}
             >
               Contact Us
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              1234 Industry Drive
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Sacramento, CA 95814
-            </Typography>
-            <Link
-              href="tel:+1-916-555-0123"
-              sx={{
-                color: 'primary.main',
-                textDecoration: 'none',
-                display: 'block',
-                mb: 1,
-                '&:hover': {
-                  color: 'primary.light',
-                },
-              }}
-            >
-              (916) 555-0123
-            </Link>
-            <Link
-              href="mailto:info@youngsprecision.com"
-              sx={{
-                color: 'primary.main',
-                textDecoration: 'none',
-                '&:hover': {
-                  color: 'primary.light',
-                },
-              }}
-            >
-              info@youngsprecision.com
-            </Link>
+            <Box component="address" sx={{ fontStyle: 'normal' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                123 Precision Way
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Sacramento, CA 95814
+              </Typography>
+              <Link
+                href="tel:+19165551234"
+                sx={{
+                  color: 'text.secondary',
+                  textDecoration: 'none',
+                  display: 'block',
+                  mb: 1,
+                  '&:hover': {
+                    color: 'primary.main',
+                  },
+                }}
+              >
+                (916) 555-1234
+              </Link>
+              <Link
+                href="mailto:info@yptgrind.com"
+                sx={{
+                  color: 'text.secondary',
+                  textDecoration: 'none',
+                  '&:hover': {
+                    color: 'primary.main',
+                  },
+                }}
+              >
+                info@yptgrind.com
+              </Link>
+            </Box>
           </Grid>
         </Grid>
+      </Container>
 
-        {/* Copyright */}
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ mt: 8, pb: 2 }}
-        >
+      {/* Copyright */}
+      <Box
+        sx={{
+          py: 3,
+          bgcolor: 'background.default',
+          textAlign: 'center',
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
           {new Date().getFullYear()} Young's Precision Tool Grinding. All rights reserved.
         </Typography>
-      </Container>
+      </Box>
     </Box>
   );
 };
