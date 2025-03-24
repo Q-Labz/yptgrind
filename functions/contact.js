@@ -1,4 +1,12 @@
 const { Pool } = require('pg');
+
+// Log environment variables (excluding sensitive data)
+console.log('Environment:', {
+  NODE_ENV: process.env.NODE_ENV,
+  hasDbUrl: !!process.env.DATABASE_URL,
+  dbUrlLength: process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 0
+});
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -9,7 +17,7 @@ const pool = new Pool({
 exports.handler = async (event, context) => {
   // Set CORS headers for development
   const headers = {
-    'Access-Control-Allow-Origin': process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://yptgrind.netlify.app',
+    'Access-Control-Allow-Origin': process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : 'https://yptgrind.netlify.app',
     'Access-Control-Allow-Headers': 'Content-Type, Accept',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json'
@@ -34,13 +42,29 @@ exports.handler = async (event, context) => {
   let client;
   try {
     console.log('Received contact form submission');
-    const body = JSON.parse(event.body);
-    console.log('Parsed request body:', body);
+    console.log('Request headers:', event.headers);
+
+    let body;
+    try {
+      body = JSON.parse(event.body);
+      console.log('Parsed request body:', body);
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      console.log('Raw request body:', event.body);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'Invalid request format',
+          details: 'Request body must be valid JSON'
+        })
+      };
+    }
 
     const { name, email, phone, company, message } = body;
 
     // Validate required fields
-    if (!name || !email || !message) {
+    if (!name?.trim() || !email?.trim() || !message?.trim()) {
       console.log('Missing required fields:', { name, email, message });
       return {
         statusCode: 400,
@@ -54,7 +78,7 @@ exports.handler = async (event, context) => {
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(email.trim())) {
       console.log('Invalid email format:', email);
       return {
         statusCode: 400,
@@ -67,19 +91,37 @@ exports.handler = async (event, context) => {
     }
 
     console.log('Attempting to connect to database...');
-    client = await pool.connect();
+    try {
+      client = await pool.connect();
+      console.log('Successfully connected to database');
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      console.error('Database connection error stack:', dbError.stack);
+      return {
+        statusCode: 503,
+        headers,
+        body: JSON.stringify({
+          error: 'Database connection error',
+          details: 'Unable to connect to the database. Please try again later.'
+        })
+      };
+    }
 
-    console.log('Connected to database, creating/updating customer...');
+    // Begin transaction
+    await client.query('BEGIN');
+
+    console.log('Creating/updating customer...');
     // Create or update customer
     const customerResult = await client.query(
       `INSERT INTO customers (name, email, phone, company)
       VALUES ($1, $2, $3, $4)
       ON CONFLICT (email) DO UPDATE
-      SET name = $1,
-          phone = COALESCE($3, customers.phone),
-          company = COALESCE($4, customers.company)
+      SET name = EXCLUDED.name,
+          phone = COALESCE(EXCLUDED.phone, customers.phone),
+          company = COALESCE(EXCLUDED.company, customers.company),
+          updated_at = CURRENT_TIMESTAMP
       RETURNING id`,
-      [name, email, phone || null, company || null]
+      [name.trim(), email.trim(), phone?.trim() || null, company?.trim() || null]
     );
 
     if (!customerResult.rows[0]) {
@@ -91,8 +133,11 @@ exports.handler = async (event, context) => {
     await client.query(
       `INSERT INTO contact_messages (customer_id, message)
       VALUES ($1, $2)`,
-      [customerResult.rows[0].id, message]
+      [customerResult.rows[0].id, message.trim()]
     );
+
+    // Commit transaction
+    await client.query('COMMIT');
 
     console.log('Successfully processed contact form submission');
 
@@ -108,6 +153,15 @@ exports.handler = async (event, context) => {
     console.error('Error processing contact form:', error);
     console.error('Error stack:', error.stack);
 
+    // Rollback transaction if client exists
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('Error rolling back transaction:', rollbackError);
+      }
+    }
+
     // Check if it's a database connection error
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       return {
@@ -120,14 +174,14 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Check if it's a JSON parsing error
-    if (error instanceof SyntaxError && error.message.includes('JSON')) {
+    // Check if it's a database constraint violation
+    if (error.code === '23505') { // Unique violation
       return {
-        statusCode: 400,
+        statusCode: 409,
         headers,
         body: JSON.stringify({
-          error: 'Invalid request format',
-          details: 'Request body must be valid JSON'
+          error: 'Duplicate entry',
+          details: 'This email address is already registered'
         })
       };
     }

@@ -17,6 +17,7 @@ import {
 import { motion } from 'framer-motion';
 import SearchIcon from '@mui/icons-material/Search';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import PageHeader from '../components/PageHeader';
 
 const products = [
   {
@@ -173,29 +174,14 @@ const Store = () => {
   });
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        pt: { xs: 12, md: 16 },
-        pb: { xs: 8, md: 12 },
-        bgcolor: 'background.default',
-      }}
-    >
-      <Container maxWidth={isMobile ? 'sm' : 'xl'}>
+    <Box>
+      <PageHeader
+        title="Tool Store"
+        subtitle="High-Quality Precision Tools for Your Manufacturing Needs"
+        image="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1600&auto=format&fit=crop&q=80"
+      />
+      <Container maxWidth={isMobile ? 'sm' : 'xl'} sx={{ py: 8 }}>
         <Box sx={{ mb: 6 }}>
-          <Typography
-            variant="h3"
-            component="h1"
-            gutterBottom
-            sx={{
-              color: 'text.primary',
-              textAlign: 'center',
-              fontWeight: 'bold',
-              mb: 4,
-            }}
-          >
-            Tool Store
-          </Typography>
           <Box sx={{ 
             display: 'flex', 
             flexDirection: { xs: 'column', sm: 'row' }, 

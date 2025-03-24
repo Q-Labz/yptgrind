@@ -1,42 +1,54 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { motion } from 'framer-motion';
 
-const PageHeader = ({ title, subtitle, imagePath }) => {
+const PageHeader = ({ title, subtitle, background, image }) => {
   return (
     <Box
+      component={motion.div}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       sx={{
         position: 'relative',
-        height: '400px',
+        height: '50vh',
         width: '100%',
         mb: 6,
-        overflow: 'hidden',
-      }}
-    >
-      <Box
-        sx={{
+        display: 'flex',
+        alignItems: 'center',
+        bgcolor: background || 'background.default',
+        '&::before': {
+          content: '""',
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundImage: `url(${imagePath})`,
+          opacity: 0.2,
+          zIndex: 0,
+          backgroundImage: image ? `url(${image})` : 'url(https://images.pexels.com/photos/2381463/pexels-photo-2381463.jpeg?auto=compress&cs=tinysrgb&w=2000)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(to bottom, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.9))',
-          }
-        }}
-      />
+          backgroundAttachment: 'fixed',
+          filter: 'brightness(0.8) contrast(1.2)',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '70%',
+          background: 'linear-gradient(to top, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.8) 40%, transparent)',
+          pointerEvents: 'none',
+          zIndex: 1,
+        }
+      }}
+    >
       <Box
         sx={{
           position: 'relative',
-          height: '100%',
+          width: '100%',
+          zIndex: 2,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -44,11 +56,15 @@ const PageHeader = ({ title, subtitle, imagePath }) => {
           color: 'white',
           textAlign: 'center',
           px: 4,
+          mt: -8
         }}
       >
         <Typography
+          component={motion.h1}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
           variant="h2"
-          component="h1"
           sx={{
             fontWeight: 'bold',
             mb: 2,
@@ -63,6 +79,10 @@ const PageHeader = ({ title, subtitle, imagePath }) => {
         </Typography>
         {subtitle && (
           <Typography
+            component={motion.div}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
             variant="h5"
             sx={{
               maxWidth: '800px',

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import {
-  Box,
   TextField,
   Button,
   Alert,
   CircularProgress,
-  Fade
+  Fade,
+  useTheme,
+  Paper
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
-const API_URL = process.env.REACT_APP_API_URL || '/.netlify/functions';
-
 const ContactForm = () => {
+  const theme = useTheme();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,7 +24,7 @@ const ContactForm = () => {
     submitting: false,
     submitted: false,
     error: null,
-    message: null
+    success: false
   });
 
   const handleChange = (e) => {
@@ -36,37 +36,44 @@ const ContactForm = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validate required fields
+  const validateForm = () => {
     const errors = [];
     if (!formData.name.trim()) errors.push('Name is required');
     if (!formData.email.trim()) errors.push('Email is required');
     if (!formData.message.trim()) errors.push('Message is required');
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email.trim() && !emailRegex.test(formData.email)) {
       errors.push('Please enter a valid email address');
     }
 
+    return errors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const errors = validateForm();
     if (errors.length > 0) {
       setStatus({
         submitting: false,
-        submitted: false,
-        error: errors.join(', ')
+        submitted: true,
+        error: errors.join(', '),
+        success: false
       });
       return;
     }
 
-    setStatus({ submitting: true, submitted: false, error: null });
+    setStatus({
+      submitting: true,
+      submitted: false,
+      error: null,
+      success: false
+    });
 
     try {
-      console.log('Submitting contact form to:', `${API_URL}/contact`);
-      console.log('Form data:', formData);
-      
-      const response = await fetch(`${API_URL}/contact`, {
+      const apiUrl = `${process.env.REACT_APP_API_URL}/contact`;
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,28 +82,20 @@ const ContactForm = () => {
         body: JSON.stringify(formData)
       });
 
-      let responseData;
-      try {
-        responseData = await response.json();
-      } catch (parseError) {
-        console.error('Failed to parse response:', parseError);
-        throw new Error('Failed to parse server response. Please try again.');
-      }
-
-      console.log('Server response:', responseData);
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(responseData.details || responseData.error || `Request failed with status ${response.status}`);
+        throw new Error(data.details || data.error || 'Failed to send message');
       }
 
       setStatus({
         submitting: false,
         submitted: true,
         error: null,
-        message: responseData.message || 'Message sent successfully'
+        success: true
       });
 
-      // Clear form after successful submission
+      // Clear form on success
       setFormData({
         name: '',
         email: '',
@@ -104,71 +103,80 @@ const ContactForm = () => {
         company: '',
         message: ''
       });
-
     } catch (error) {
-      console.error('Error submitting form:', error);
       setStatus({
         submitting: false,
-        submitted: false,
-        error: error.message || 'Failed to send message. Please try again.'
+        submitted: true,
+        error: error.message,
+        success: false
       });
     }
   };
 
+  const inputProps = {
+    sx: {
+      '& .MuiOutlinedInput-root': {
+        '& fieldset': {
+          borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+        },
+        '&:hover fieldset': {
+          borderColor: theme.palette.primary.main,
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: theme.palette.primary.main,
+        },
+        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+      },
+      '& .MuiInputLabel-root': {
+        color: theme.palette.text.secondary,
+      },
+      '& .MuiOutlinedInput-input': {
+        color: theme.palette.text.primary,
+      },
+      mb: 2
+    }
+  };
+
   return (
-    <Box
+    <Paper
       component={motion.form}
+      elevation={3}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       onSubmit={handleSubmit}
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 3,
-        maxWidth: 600,
-        mx: 'auto',
-        p: 3,
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        boxShadow: 3
+        p: 4,
+        bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'background.paper',
+        borderRadius: 2
       }}
     >
-      {status.error && (
+      {status.submitted && (
         <Fade in>
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {status.error}
-          </Alert>
-        </Fade>
-      )}
-
-      {status.submitted && status.message && (
-        <Fade in>
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {status.message}
+          <Alert 
+            severity={status.error ? 'error' : 'success'}
+            sx={{ mb: 3 }}
+          >
+            {status.error || 'Thank you for your message. We will get back to you soon!'}
           </Alert>
         </Fade>
       )}
 
       <TextField
         required
+        fullWidth
         label="Name"
         name="name"
         value={formData.name}
         onChange={handleChange}
         disabled={status.submitting}
         error={status.error?.includes('Name')}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            '&:hover fieldset': {
-              borderColor: 'primary.main',
-            },
-          },
-        }}
+        {...inputProps}
       />
 
       <TextField
         required
+        fullWidth
         label="Email"
         name="email"
         type="email"
@@ -176,76 +184,60 @@ const ContactForm = () => {
         onChange={handleChange}
         disabled={status.submitting}
         error={status.error?.includes('email')}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            '&:hover fieldset': {
-              borderColor: 'primary.main',
-            },
-          },
-        }}
+        {...inputProps}
       />
 
       <TextField
+        fullWidth
         label="Phone"
         name="phone"
         value={formData.phone}
         onChange={handleChange}
         disabled={status.submitting}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            '&:hover fieldset': {
-              borderColor: 'primary.main',
-            },
-          },
-        }}
+        {...inputProps}
       />
 
       <TextField
+        fullWidth
         label="Company"
         name="company"
         value={formData.company}
         onChange={handleChange}
         disabled={status.submitting}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            '&:hover fieldset': {
-              borderColor: 'primary.main',
-            },
-          },
-        }}
+        {...inputProps}
       />
 
       <TextField
         required
-        label="Message"
-        name="message"
+        fullWidth
         multiline
         rows={4}
+        label="Message"
+        name="message"
         value={formData.message}
         onChange={handleChange}
         disabled={status.submitting}
         error={status.error?.includes('Message')}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            '&:hover fieldset': {
-              borderColor: 'primary.main',
-            },
-          },
-        }}
+        {...inputProps}
       />
 
       <Button
         type="submit"
         variant="contained"
+        fullWidth
         disabled={status.submitting}
         sx={{
           mt: 2,
+          py: 1.5,
           position: 'relative',
-          bgcolor: 'primary.main',
+          bgcolor: theme.palette.primary.main,
           color: 'white',
           '&:hover': {
-            bgcolor: 'primary.dark',
+            bgcolor: theme.palette.primary.dark,
           },
+          '&.Mui-disabled': {
+            bgcolor: theme.palette.action.disabledBackground,
+          }
         }}
       >
         {status.submitting ? (
@@ -258,6 +250,7 @@ const ContactForm = () => {
                 left: '50%',
                 marginTop: '-12px',
                 marginLeft: '-12px',
+                color: theme.palette.primary.main
               }}
             />
             Sending...
@@ -266,7 +259,7 @@ const ContactForm = () => {
           'Send Message'
         )}
       </Button>
-    </Box>
+    </Paper>
   );
 };
 
