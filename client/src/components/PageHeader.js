@@ -12,7 +12,6 @@ const PageHeader = ({ title, subtitle, background, image }) => {
         position: 'relative',
         height: '50vh',
         width: '100%',
-        mb: 6,
         display: 'flex',
         alignItems: 'center',
         bgcolor: background || 'background.default',
