@@ -1,20 +1,12 @@
 [build]
-  base = ""
-  command = "cd client && npm install && npm run build"
-  publish = "client/build"
+  base = "client"
+  command = "npm install && npm run build"
+  publish = "build"
   functions = "functions"
 
 [build.environment]
   NODE_VERSION = "18"
   CI = "false"
-
-[dev]
-  framework = "#custom"
-  command = "cd client && npm start"
-  port = 9999
-  targetPort = 3000
-  publish = "client/build"
-  autoLaunch = true
 
 [[redirects]]
   from = "/*"
@@ -25,3 +17,12 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https: http:; connect-src 'self' https://*.supabase.co wss://*.supabase.co;"
