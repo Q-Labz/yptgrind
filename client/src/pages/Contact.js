@@ -3,6 +3,7 @@ import { Container, Typography, Box, TextField, Button, Alert, CircularProgress 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import PageHeader from '../components/PageHeader';
+import { supabase } from '../lib/supabase';
 
 const AnimatedSection = ({ children }) => {
   const { ref, inView } = useInView({
@@ -50,21 +51,20 @@ const Contact = () => {
     setStatus({ submitting: true, submitted: false, error: null });
 
     try {
-      const apiUrl = `${process.env.REACT_APP_API_URL}/contact`;
-      console.log('Submitting to:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone || null,
+            company: formData.company || null,
+            message: `${formData.subject ? formData.subject + ': ' : ''}${formData.message}`
+          }
+        ]);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit contact form');
+      if (error) {
+        throw error;
       }
 
       setStatus({

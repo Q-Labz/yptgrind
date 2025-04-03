@@ -1,52 +1,114 @@
 import React, { useState } from 'react';
 import {
+  Box,
   TextField,
   Button,
   Alert,
   CircularProgress,
-  Fade,
-  useTheme,
+  Grid,
+  Typography,
+  Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Paper
 } from '@mui/material';
-import { motion } from 'framer-motion';
+import { supabase } from '../lib/supabase';
+import FileUpload from './FileUpload';
+
+const urgencyLevels = [
+  'Low - General Inquiry',
+  'Medium - Need Response Within Week',
+  'High - Need Response Within 48 Hours',
+  'Urgent - Need Immediate Response'
+];
+
+const contactMethods = [
+  'Email',
+  'Phone',
+  'Either'
+];
+
+const contactTimes = [
+  'Morning (8AM-12PM)',
+  'Afternoon (12PM-5PM)',
+  'Evening (5PM-8PM)',
+  'Any Time'
+];
+
+const industries = [
+  'Aerospace',
+  'Automotive',
+  'Medical',
+  'Defense',
+  'Electronics',
+  'Energy',
+  'Manufacturing',
+  'Other'
+];
+
+const foundUs = [
+  'Google Search',
+  'Referral',
+  'Social Media',
+  'Trade Show',
+  'Industry Directory',
+  'Other'
+];
 
 const ContactForm = () => {
-  const theme = useTheme();
   const [formData, setFormData] = useState({
+    // Basic Information
     name: '',
     email: '',
     phone: '',
     company: '',
-    message: ''
+    
+    // Contact Preferences
+    subject: '',
+    preferred_contact: '',
+    best_time: '',
+    urgency: '',
+    
+    // Business Information
+    industry: '',
+    location: '',
+    how_found: '',
+    
+    // Message
+    message: '',
+    
+    // File Attachments
+    attachment_urls: []
   });
 
   const [status, setStatus] = useState({
     submitting: false,
     submitted: false,
     error: null,
-    success: false
+    message: null
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear errors when user starts typing
-    if (status.error) {
-      setStatus(prev => ({ ...prev, error: null }));
-    }
+  };
+
+  const handleFileUpload = (urls) => {
+    setFormData(prev => ({
+      ...prev,
+      attachment_urls: urls
+    }));
   };
 
   const validateForm = () => {
     const errors = [];
-    if (!formData.name.trim()) errors.push('Name is required');
-    if (!formData.email.trim()) errors.push('Email is required');
-    if (!formData.message.trim()) errors.push('Message is required');
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email.trim() && !emailRegex.test(formData.email)) {
-      errors.push('Please enter a valid email address');
-    }
-
+    if (!formData.name) errors.push('Name is required');
+    if (!formData.email) errors.push('Email is required');
+    if (!formData.subject) errors.push('Subject is required');
+    if (!formData.message) errors.push('Message is required');
+    
     return errors;
   };
 
@@ -57,209 +119,294 @@ const ContactForm = () => {
     if (errors.length > 0) {
       setStatus({
         submitting: false,
-        submitted: true,
-        error: errors.join(', '),
-        success: false
+        submitted: false,
+        error: errors.join(', ')
       });
       return;
     }
 
-    setStatus({
-      submitting: true,
-      submitted: false,
-      error: null,
-      success: false
-    });
+    setStatus({ submitting: true, submitted: false, error: null });
 
     try {
-      const apiUrl = `${process.env.REACT_APP_API_URL}/contact`;
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([{
+          ...formData,
+          created_at: new Date().toISOString()
+        }]);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.details || data.error || 'Failed to send message');
-      }
+      if (error) throw error;
 
       setStatus({
         submitting: false,
         submitted: true,
         error: null,
-        success: true
+        message: 'Message sent successfully!'
       });
 
-      // Clear form on success
+      // Clear form
       setFormData({
         name: '',
         email: '',
         phone: '',
         company: '',
-        message: ''
+        subject: '',
+        preferred_contact: '',
+        best_time: '',
+        urgency: '',
+        industry: '',
+        location: '',
+        how_found: '',
+        message: '',
+        attachment_urls: []
       });
     } catch (error) {
+      console.error('Error sending message:', error);
       setStatus({
         submitting: false,
         submitted: true,
-        error: error.message,
-        success: false
+        error: error.message || 'Failed to send message'
       });
-    }
-  };
-
-  const inputProps = {
-    sx: {
-      '& .MuiOutlinedInput-root': {
-        '& fieldset': {
-          borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
-        },
-        '&:hover fieldset': {
-          borderColor: theme.palette.primary.main,
-        },
-        '&.Mui-focused fieldset': {
-          borderColor: theme.palette.primary.main,
-        },
-        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-      },
-      '& .MuiInputLabel-root': {
-        color: theme.palette.text.secondary,
-      },
-      '& .MuiOutlinedInput-input': {
-        color: theme.palette.text.primary,
-      },
-      mb: 2
     }
   };
 
   return (
-    <Paper
-      component={motion.form}
-      elevation={3}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      onSubmit={handleSubmit}
-      sx={{
-        p: 4,
-        bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'background.paper',
-        borderRadius: 2
-      }}
-    >
-      {status.submitted && (
-        <Fade in>
-          <Alert 
-            severity={status.error ? 'error' : 'success'}
-            sx={{ mb: 3 }}
-          >
-            {status.error || 'Thank you for your message. We will get back to you soon!'}
-          </Alert>
-        </Fade>
-      )}
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+      <Grid container spacing={3}>
+        {/* Basic Information */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom>
+            Contact Information
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+        </Grid>
+        
+        <Grid item xs={12} sm={6}>
+          <TextField
+            required
+            fullWidth
+            label="Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            required
+            fullWidth
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Phone"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Company"
+            name="company"
+            value={formData.company}
+            onChange={handleChange}
+          />
+        </Grid>
 
-      <TextField
-        required
-        fullWidth
-        label="Name"
-        name="name"
-        value={formData.name}
-        onChange={handleChange}
-        disabled={status.submitting}
-        error={status.error?.includes('Name')}
-        {...inputProps}
-      />
+        {/* Contact Preferences */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Contact Preferences
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+        </Grid>
 
-      <TextField
-        required
-        fullWidth
-        label="Email"
-        name="email"
-        type="email"
-        value={formData.email}
-        onChange={handleChange}
-        disabled={status.submitting}
-        error={status.error?.includes('email')}
-        {...inputProps}
-      />
+        <Grid item xs={12} sm={6}>
+          <TextField
+            required
+            fullWidth
+            label="Subject"
+            name="subject"
+            value={formData.subject}
+            onChange={handleChange}
+          />
+        </Grid>
 
-      <TextField
-        fullWidth
-        label="Phone"
-        name="phone"
-        value={formData.phone}
-        onChange={handleChange}
-        disabled={status.submitting}
-        {...inputProps}
-      />
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>Preferred Contact Method</InputLabel>
+            <Select
+              name="preferred_contact"
+              value={formData.preferred_contact}
+              onChange={handleChange}
+              label="Preferred Contact Method"
+            >
+              {contactMethods.map((method) => (
+                <MenuItem key={method} value={method}>{method}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
 
-      <TextField
-        fullWidth
-        label="Company"
-        name="company"
-        value={formData.company}
-        onChange={handleChange}
-        disabled={status.submitting}
-        {...inputProps}
-      />
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>Best Time to Contact</InputLabel>
+            <Select
+              name="best_time"
+              value={formData.best_time}
+              onChange={handleChange}
+              label="Best Time to Contact"
+            >
+              {contactTimes.map((time) => (
+                <MenuItem key={time} value={time}>{time}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
 
-      <TextField
-        required
-        fullWidth
-        multiline
-        rows={4}
-        label="Message"
-        name="message"
-        value={formData.message}
-        onChange={handleChange}
-        disabled={status.submitting}
-        error={status.error?.includes('Message')}
-        {...inputProps}
-      />
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>Urgency</InputLabel>
+            <Select
+              name="urgency"
+              value={formData.urgency}
+              onChange={handleChange}
+              label="Urgency"
+            >
+              {urgencyLevels.map((level) => (
+                <MenuItem key={level} value={level}>{level}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
 
-      <Button
-        type="submit"
-        variant="contained"
-        fullWidth
-        disabled={status.submitting}
-        sx={{
-          mt: 2,
-          py: 1.5,
-          position: 'relative',
-          bgcolor: theme.palette.primary.main,
-          color: 'white',
-          '&:hover': {
-            bgcolor: theme.palette.primary.dark,
-          },
-          '&.Mui-disabled': {
-            bgcolor: theme.palette.action.disabledBackground,
-          }
-        }}
-      >
-        {status.submitting ? (
-          <>
-            <CircularProgress
-              size={24}
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                marginTop: '-12px',
-                marginLeft: '-12px',
-                color: theme.palette.primary.main
-              }}
+        {/* Business Information */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Business Information
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>Industry</InputLabel>
+            <Select
+              name="industry"
+              value={formData.industry}
+              onChange={handleChange}
+              label="Industry"
+            >
+              {industries.map((industry) => (
+                <MenuItem key={industry} value={industry}>{industry}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Location"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            placeholder="City, State"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>How Did You Find Us?</InputLabel>
+            <Select
+              name="how_found"
+              value={formData.how_found}
+              onChange={handleChange}
+              label="How Did You Find Us?"
+            >
+              {foundUs.map((source) => (
+                <MenuItem key={source} value={source}>{source}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Message */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Message
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            required
+            fullWidth
+            multiline
+            rows={4}
+            label="Message"
+            name="message"
+            value={formData.message}
+            onChange={handleChange}
+            placeholder="Please provide details about your inquiry"
+          />
+        </Grid>
+
+        {/* File Upload */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Attachments
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Upload any relevant files (optional)
+            </Typography>
+            <FileUpload
+              onUploadComplete={handleFileUpload}
+              maxFiles={3}
+              acceptedTypes=".pdf,.doc,.docx,.png,.jpg,.jpeg"
             />
-            Sending...
-          </>
-        ) : (
-          'Send Message'
-        )}
-      </Button>
-    </Paper>
+          </Paper>
+        </Grid>
+
+        {/* Form Status and Submit */}
+        <Grid item xs={12}>
+          {status.error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {status.error}
+            </Alert>
+          )}
+          {status.submitted && status.message && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {status.message}
+            </Alert>
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            disabled={status.submitting}
+            sx={{ mt: 2 }}
+          >
+            {status.submitting ? (
+              <CircularProgress size={24} />
+            ) : (
+              'Send Message'
+            )}
+          </Button>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 
