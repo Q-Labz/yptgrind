@@ -13,14 +13,16 @@ function App() {
     <ErrorBoundary>
       <StyledEngineProvider injectFirst>
         <ThemeProvider theme={theme}>
-          <CssBaseline />
+          <CssBaseline enableColorScheme />
           <Router>
             <Box
+              component="div"
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
                 minHeight: '100vh',
                 bgcolor: 'background.default',
+                color: 'text.primary',
               }}
             >
               <Navbar />
@@ -30,6 +32,8 @@ function App() {
                   flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
+                  width: '100%',
+                  position: 'relative',
                 }}
               >
                 <AppRoutes />

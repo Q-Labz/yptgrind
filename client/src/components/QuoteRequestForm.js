@@ -5,7 +5,6 @@ import {
   Button,
   Alert,
   CircularProgress,
-  Fade,
   MenuItem,
   FormControl,
   InputLabel,
@@ -17,8 +16,7 @@ import {
   FormControlLabel,
   Paper
 } from '@mui/material';
-import { motion } from 'framer-motion';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import FileUpload from './FileUpload';
 
 const serviceTypes = [
@@ -49,512 +47,345 @@ const surfaceFinishOptions = [
   'Ra 0.1-0.2 (Mirror)',
   'Ra 0.2-0.4 (Fine)',
   'Ra 0.4-0.8 (Medium)',
-  'Ra 0.8-1.6 (Semi-rough)',
+  'Ra 0.8-1.6 (Standard)',
   'Ra >1.6 (Rough)',
-  'Not specified'
-];
-
-const toleranceOptions = [
-  '± 0.0001"',
-  '± 0.0005"',
-  '± 0.001"',
-  '± 0.005"',
-  '± 0.010"',
-  'Standard tolerance',
-  'Not specified'
-];
-
-const certificationOptions = [
-  'ISO 9001',
-  'AS9100',
-  'ITAR',
-  'Material Certification',
-  'First Article Inspection',
-  'PPAP',
-  'Custom Requirements'
+  'As Required'
 ];
 
 const QuoteRequestForm = () => {
   const [formData, setFormData] = useState({
-    // Basic Information
     name: '',
     email: '',
     phone: '',
     company: '',
-    
-    // Project Details
-    service_type: '',
-    project_details: '',
+    serviceType: '',
     material: '',
     quantity: '',
     dimensions: '',
-    surface_finish: '',
+    surfaceFinish: '',
     tolerances: '',
-    special_requirements: '',
-    certification_requirements: [],
-    
-    // Business Details
-    previous_supplier: '',
-    target_price_range: '',
+    projectDetails: '',
+    sampleRequired: false,
+    prototypeRequired: false,
+    specialRequirements: '',
     timeline: '',
-    delivery_location: '',
-    preferred_shipping_method: '',
-    
-    // Quality Requirements
-    quality_requirements: '',
-    inspection_requirements: '',
-    
-    // Additional Options
-    sample_required: false,
-    prototype_required: false,
-    
-    // File Attachments
-    attachment_urls: []
+    deliveryLocation: '',
   });
-
-  const [status, setStatus] = useState({
-    submitting: false,
-    submitted: false,
-    error: null,
-    message: null
-  });
+  
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [files, setFiles] = useState([]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
-  };
-
-  const handleCertificationChange = (e) => {
+    const { name, value, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      certification_requirements: e.target.value
+      [name]: e.target.type === 'checkbox' ? checked : value
     }));
-  };
-
-  const handleFileUpload = (urls) => {
-    setFormData(prev => ({
-      ...prev,
-      attachment_urls: urls
-    }));
-  };
-
-  const validateForm = () => {
-    const errors = [];
-    if (!formData.name) errors.push('Name is required');
-    if (!formData.email) errors.push('Email is required');
-    if (!formData.service_type) errors.push('Service type is required');
-    if (!formData.project_details) errors.push('Project details are required');
-    if (!formData.material) errors.push('Material is required');
-    if (!formData.quantity) errors.push('Quantity is required');
-    
-    return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const errors = validateForm();
-    if (errors.length > 0) {
-      setStatus({
-        submitting: false,
-        submitted: false,
-        error: errors.join(', ')
-      });
-      return;
-    }
-
-    setStatus({ submitting: true, submitted: false, error: null });
+    setLoading(true);
+    setError('');
 
     try {
-      const { error } = await supabase
+      if (!isSupabaseConfigured()) {
+        console.log('Form submission (Development Mode):', formData);
+        setSuccess(true);
+        return;
+      }
+
+      const { error: uploadError } = await supabase
         .from('quote_requests')
-        .insert([{
-          ...formData,
-          created_at: new Date().toISOString()
-        }]);
+        .insert([
+          {
+            ...formData,
+            attachment_urls: files.map(f => f.url)
+          }
+        ]);
 
-      if (error) throw error;
-
-      setStatus({
-        submitting: false,
-        submitted: true,
-        error: null,
-        message: 'Quote request submitted successfully!'
-      });
-
-      // Clear form
+      if (uploadError) throw uploadError;
+      setSuccess(true);
       setFormData({
         name: '',
         email: '',
         phone: '',
         company: '',
-        service_type: '',
-        project_details: '',
+        serviceType: '',
         material: '',
         quantity: '',
         dimensions: '',
-        surface_finish: '',
+        surfaceFinish: '',
         tolerances: '',
-        special_requirements: '',
-        certification_requirements: [],
-        previous_supplier: '',
-        target_price_range: '',
+        projectDetails: '',
+        sampleRequired: false,
+        prototypeRequired: false,
+        specialRequirements: '',
         timeline: '',
-        delivery_location: '',
-        preferred_shipping_method: '',
-        quality_requirements: '',
-        inspection_requirements: '',
-        sample_required: false,
-        prototype_required: false,
-        attachment_urls: []
+        deliveryLocation: '',
       });
-    } catch (error) {
-      console.error('Error submitting quote request:', error);
-      setStatus({
-        submitting: false,
-        submitted: true,
-        error: error.message || 'Failed to submit quote request'
-      });
+      setFiles([]);
+    } catch (err) {
+      setError(err.message || 'An error occurred while submitting the form.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-      <Grid container spacing={3}>
-        {/* Basic Information */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>
-            Contact Information
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
+    <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', maxWidth: 800, mx: 'auto', p: 3 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+        {/* Contact Information */}
+        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+          Contact Information
+        </Typography>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              label="Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Company"
+              name="company"
+              value={formData.company}
+              onChange={handleChange}
+            />
+          </Grid>
         </Grid>
-        
-        <Grid item xs={12} sm={6}>
-          <TextField
-            required
-            fullWidth
-            label="Name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            required
-            fullWidth
-            label="Email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Company"
-            name="company"
-            value={formData.company}
-            onChange={handleChange}
-          />
-        </Grid>
+
+        <Divider sx={{ my: 4 }} />
 
         {/* Project Details */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-            Project Details
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth required>
-            <InputLabel>Service Type</InputLabel>
-            <Select
-              name="service_type"
-              value={formData.service_type}
+        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+          Project Details
+        </Typography>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth required>
+              <InputLabel>Service Type</InputLabel>
+              <Select
+                name="serviceType"
+                value={formData.serviceType}
+                onChange={handleChange}
+                label="Service Type"
+              >
+                {serviceTypes.map(type => (
+                  <MenuItem key={type} value={type}>{type}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth required>
+              <InputLabel>Material</InputLabel>
+              <Select
+                name="material"
+                value={formData.material}
+                onChange={handleChange}
+                label="Material"
+              >
+                {materialOptions.map(material => (
+                  <MenuItem key={material} value={material}>{material}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              label="Quantity"
+              name="quantity"
+              value={formData.quantity}
               onChange={handleChange}
-              label="Service Type"
-            >
-              {serviceTypes.map((type) => (
-                <MenuItem key={type} value={type}>{type}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth required>
-            <InputLabel>Material</InputLabel>
-            <Select
-              name="material"
-              value={formData.material}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Dimensions"
+              name="dimensions"
+              value={formData.dimensions}
               onChange={handleChange}
-              label="Material"
-            >
-              {materialOptions.map((material) => (
-                <MenuItem key={material} value={material}>{material}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            required
-            fullWidth
-            label="Quantity"
-            name="quantity"
-            type="number"
-            value={formData.quantity}
-            onChange={handleChange}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Dimensions"
-            name="dimensions"
-            placeholder='2" x 3" x 0.5"'
-            value={formData.dimensions}
-            onChange={handleChange}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth>
-            <InputLabel>Surface Finish</InputLabel>
-            <Select
-              name="surface_finish"
-              value={formData.surface_finish}
-              onChange={handleChange}
-              label="Surface Finish"
-            >
-              {surfaceFinishOptions.map((finish) => (
-                <MenuItem key={finish} value={finish}>{finish}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth>
-            <InputLabel>Tolerances</InputLabel>
-            <Select
+              placeholder="e.g., 10mm x 20mm x 30mm"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel>Surface Finish</InputLabel>
+              <Select
+                name="surfaceFinish"
+                value={formData.surfaceFinish}
+                onChange={handleChange}
+                label="Surface Finish"
+              >
+                {surfaceFinishOptions.map(finish => (
+                  <MenuItem key={finish} value={finish}>{finish}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Tolerances"
               name="tolerances"
               value={formData.tolerances}
               onChange={handleChange}
-              label="Tolerances"
-            >
-              {toleranceOptions.map((tolerance) => (
-                <MenuItem key={tolerance} value={tolerance}>{tolerance}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              placeholder="e.g., ±0.01mm"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              required
+              fullWidth
+              multiline
+              rows={4}
+              label="Project Details"
+              name="projectDetails"
+              value={formData.projectDetails}
+              onChange={handleChange}
+            />
+          </Grid>
         </Grid>
 
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            label="Project Details"
-            name="project_details"
-            required
-            value={formData.project_details}
-            onChange={handleChange}
-            placeholder="Please provide detailed information about your project requirements"
-          />
+        <Divider sx={{ my: 4 }} />
+
+        {/* Additional Requirements */}
+        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+          Additional Requirements
+        </Typography>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.sampleRequired}
+                  onChange={handleChange}
+                  name="sampleRequired"
+                />
+              }
+              label="Sample Required"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.prototypeRequired}
+                  onChange={handleChange}
+                  name="prototypeRequired"
+                />
+              }
+              label="Prototype Required"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="Special Requirements"
+              name="specialRequirements"
+              value={formData.specialRequirements}
+              onChange={handleChange}
+            />
+          </Grid>
         </Grid>
 
-        {/* Quality and Certification */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-            Quality & Certification Requirements
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ my: 4 }} />
+
+        {/* Timeline & Delivery */}
+        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+          Timeline & Delivery
+        </Typography>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Timeline"
+              name="timeline"
+              value={formData.timeline}
+              onChange={handleChange}
+              placeholder="e.g., 2 weeks"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Delivery Location"
+              name="deliveryLocation"
+              value={formData.deliveryLocation}
+              onChange={handleChange}
+            />
+          </Grid>
         </Grid>
 
-        <Grid item xs={12}>
-          <FormControl fullWidth>
-            <InputLabel>Certification Requirements</InputLabel>
-            <Select
-              multiple
-              name="certification_requirements"
-              value={formData.certification_requirements}
-              onChange={handleCertificationChange}
-              label="Certification Requirements"
-              renderValue={(selected) => selected.join(', ')}
-            >
-              {certificationOptions.map((cert) => (
-                <MenuItem key={cert} value={cert}>
-                  <Checkbox checked={formData.certification_requirements.indexOf(cert) > -1} />
-                  {cert}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Quality Requirements"
-            name="quality_requirements"
-            value={formData.quality_requirements}
-            onChange={handleChange}
-            placeholder="Specify any specific quality requirements"
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Inspection Requirements"
-            name="inspection_requirements"
-            value={formData.inspection_requirements}
-            onChange={handleChange}
-            placeholder="Specify any inspection requirements or criteria"
-          />
-        </Grid>
-
-        {/* Additional Options */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-            Additional Requirements
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={formData.sample_required}
-                onChange={handleCheckboxChange}
-                name="sample_required"
-              />
-            }
-            label="Sample Required"
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={formData.prototype_required}
-                onChange={handleCheckboxChange}
-                name="prototype_required"
-              />
-            }
-            label="Prototype Required"
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Special Requirements"
-            name="special_requirements"
-            multiline
-            rows={2}
-            value={formData.special_requirements}
-            onChange={handleChange}
-            placeholder="Any special requirements or notes"
-          />
-        </Grid>
-
-        {/* Timeline and Delivery */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-            Timeline & Delivery
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Timeline"
-            name="timeline"
-            value={formData.timeline}
-            onChange={handleChange}
-            placeholder="When do you need this by?"
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Delivery Location"
-            name="delivery_location"
-            value={formData.delivery_location}
-            onChange={handleChange}
-          />
-        </Grid>
+        <Divider sx={{ my: 4 }} />
 
         {/* File Upload */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-            Attachments
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Upload any relevant files (drawings, specifications, etc.)
-            </Typography>
-            <FileUpload
-              onUploadComplete={handleFileUpload}
-              maxFiles={5}
-              acceptedTypes=".pdf,.dwg,.dxf,.step,.stp,.iges,.igs,.x_t,.x_b,.png,.jpg,.jpeg"
-            />
-          </Paper>
-        </Grid>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+          File Attachments
+        </Typography>
+        <FileUpload files={files} setFiles={setFiles} />
 
-        {/* Form Status and Submit */}
-        <Grid item xs={12}>
-          {status.error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {status.error}
-            </Alert>
-          )}
-          {status.submitted && status.message && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              {status.message}
-            </Alert>
-          )}
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert severity="success" sx={{ mt: 2 }}>
+            Quote request submitted successfully! We'll get back to you soon.
+          </Alert>
+        )}
+
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             type="submit"
             variant="contained"
-            fullWidth
-            disabled={status.submitting}
-            sx={{ mt: 2 }}
+            disabled={loading}
+            sx={{
+              minWidth: 200,
+              py: 1.5,
+              fontSize: '1.1rem',
+            }}
           >
-            {status.submitting ? (
-              <CircularProgress size={24} />
-            ) : (
-              'Submit Quote Request'
-            )}
+            {loading ? <CircularProgress size={24} /> : 'Submit Request'}
           </Button>
-        </Grid>
-      </Grid>
+        </Box>
+      </Paper>
     </Box>
   );
 };

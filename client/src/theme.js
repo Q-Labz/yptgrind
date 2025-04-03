@@ -1,43 +1,58 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 
-const theme = createTheme({
+const baseTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#06B6D4', // cyan-500
-      light: '#22D3EE', // cyan-400
-      dark: '#0891B2', // cyan-600
+      main: '#06B6D4',
+      light: '#22D3EE',
+      dark: '#0891B2',
+      contrastText: '#ffffff',
     },
     secondary: {
-      main: '#0EA5E9', // sky-500
-      light: '#38BDF8', // sky-400
-      dark: '#0284C7', // sky-600
+      main: '#0EA5E9',
+      light: '#38BDF8',
+      dark: '#0284C7',
+      contrastText: '#ffffff',
     },
     background: {
-      default: '#0F172A', // slate-950
-      paper: '#1E293B', // slate-800
+      default: '#0F172A',
+      paper: '#1E293B',
     },
     text: {
-      primary: '#F8FAFC', // slate-50
-      secondary: '#CBD5E1', // slate-300
+      primary: '#F8FAFC',
+      secondary: '#CBD5E1',
     },
-    slate: {
-      50: '#F8FAFC',
-      100: '#F1F5F9',
-      200: '#E2E8F0',
-      300: '#CBD5E1',
-      400: '#94A3B8',
-      500: '#64748B',
-      600: '#475569',
-      700: '#334155',
-      800: '#1E293B',
-      900: '#0F172A',
-      950: '#020617',
+    error: {
+      main: '#ef4444',
+      light: '#f87171',
+      dark: '#dc2626',
+      '500': '#ef4444',
+    },
+    warning: {
+      main: '#f59e0b',
+      light: '#fbbf24',
+      dark: '#d97706',
+      '500': '#f59e0b',
+    },
+    info: {
+      main: '#3b82f6',
+      light: '#60a5fa',
+      dark: '#2563eb',
+      '500': '#3b82f6',
+    },
+    success: {
+      main: '#10b981',
+      light: '#34d399',
+      dark: '#059669',
+      '500': '#10b981',
     },
     cyan: {
-      400: '#22D3EE',
-      500: '#06B6D4',
-      600: '#0891B2',
+      main: '#06B6D4',
+      light: '#22D3EE',
+      dark: '#0891B2',
+      '500': '#06B6D4',
+      '600': '#0891B2',
     },
   },
   typography: {
@@ -83,7 +98,38 @@ const theme = createTheme({
       fontWeight: 500,
     },
   },
+  shape: {
+    borderRadius: 8,
+  },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          scrollbarColor: "#6b6b6b #2b2b2b",
+          "&::-webkit-scrollbar, & *::-webkit-scrollbar": {
+            backgroundColor: "#2b2b2b",
+          },
+          "&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb": {
+            borderRadius: 8,
+            backgroundColor: "#6b6b6b",
+            minHeight: 24,
+            border: "3px solid #2b2b2b",
+          },
+          "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus": {
+            backgroundColor: "#959595",
+          },
+          "&::-webkit-scrollbar-thumb:active, & *::-webkit-scrollbar-thumb:active": {
+            backgroundColor: "#959595",
+          },
+          "&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: "#959595",
+          },
+          "&::-webkit-scrollbar-corner, & *::-webkit-scrollbar-corner": {
+            backgroundColor: "#2b2b2b",
+          },
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
@@ -91,39 +137,14 @@ const theme = createTheme({
           padding: '0.75rem 1.5rem',
           transition: 'all 0.3s ease',
           '&:hover': {
-            transform: 'scale(1.05)',
+            transform: 'translateY(-2px)',
           },
-        },
-        contained: {
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          '&:hover': {
-            boxShadow: '0 6px 8px rgba(0, 0, 0, 0.2)',
-          },
-        },
-        outlined: {
-          borderWidth: '2px',
-          '&:hover': {
-            borderWidth: '2px',
-          },
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: '1rem',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backgroundImage: 'none',
         },
       },
     },
   },
 });
+
+const theme = responsiveFontSizes(baseTheme);
 
 export default theme;

@@ -13,38 +13,43 @@ import {
 } from '@mui/material';
 import { AttachFile, Delete, CloudUpload } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-const FileUpload = ({ onUploadComplete, maxFiles = 5, acceptedTypes = '*' }) => {
-  const [files, setFiles] = useState([]);
+const FileUpload = ({ files, setFiles }) => {
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState({});
+  const [error, setError] = useState('');
 
   const handleFileSelect = async (event) => {
     const selectedFiles = Array.from(event.target.files);
-    if (files.length + selectedFiles.length > maxFiles) {
-      alert(`Maximum ${maxFiles} files allowed`);
+    if (files.length + selectedFiles.length > 5) {
+      setError('Maximum 5 files allowed');
       return;
     }
 
     setUploading(true);
-    const uploadedUrls = [];
-    const newProgress = { ...uploadProgress };
+    setError('');
 
-    for (const file of selectedFiles) {
-      const fileId = uuidv4();
-      newProgress[fileId] = 0;
-      setUploadProgress(newProgress);
+    try {
+      if (!isSupabaseConfigured()) {
+        // Development mode - simulate file upload
+        const mockFiles = selectedFiles.map(file => ({
+          name: file.name,
+          size: file.size,
+          url: URL.createObjectURL(file),
+          id: uuidv4()
+        }));
+        setFiles([...files, ...mockFiles]);
+        return;
+      }
 
-      try {
+      for (const file of selectedFiles) {
+        const fileId = uuidv4();
         const fileExt = file.name.split('.').pop();
         const filePath = `${fileId}.${fileExt}`;
-        const { error: uploadError, data } = await supabase.storage
+
+        const { error: uploadError } = await supabase.storage
           .from('form-attachments')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+          .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
@@ -52,89 +57,84 @@ const FileUpload = ({ onUploadComplete, maxFiles = 5, acceptedTypes = '*' }) => 
           .from('form-attachments')
           .getPublicUrl(filePath);
 
-        uploadedUrls.push(publicUrl);
-        setFiles(prev => [...prev, { name: file.name, url: publicUrl, id: fileId }]);
-        
-        newProgress[fileId] = 100;
-        setUploadProgress(newProgress);
-      } catch (error) {
-        console.error('Error uploading file:', error);
-        alert(`Error uploading ${file.name}`);
-        delete newProgress[fileId];
-        setUploadProgress(newProgress);
+        setFiles(prev => [...prev, {
+          id: fileId,
+          name: file.name,
+          size: file.size,
+          url: publicUrl
+        }]);
       }
-    }
-
-    setUploading(false);
-    if (uploadedUrls.length > 0) {
-      onUploadComplete(uploadedUrls);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleRemoveFile = async (fileToRemove) => {
+  const handleDelete = async (fileToDelete) => {
+    if (!isSupabaseConfigured()) {
+      setFiles(files.filter(f => f.id !== fileToDelete.id));
+      return;
+    }
+
     try {
-      const filePath = fileToRemove.url.split('/').pop();
-      const { error } = await supabase.storage
+      const fileName = fileToDelete.url.split('/').pop();
+      await supabase.storage
         .from('form-attachments')
-        .remove([filePath]);
+        .remove([fileName]);
 
-      if (error) throw error;
-
-      setFiles(files.filter(file => file.id !== fileToRemove.id));
-      onUploadComplete(files.filter(file => file.id !== fileToRemove.id).map(f => f.url));
-    } catch (error) {
-      console.error('Error removing file:', error);
-      alert('Error removing file');
+      setFiles(files.filter(f => f.id !== fileToDelete.id));
+    } catch (err) {
+      setError(err.message);
     }
   };
 
   return (
     <Box>
       <input
-        accept={acceptedTypes}
-        style={{ display: 'none' }}
-        id="file-upload-input"
-        multiple
         type="file"
+        multiple
         onChange={handleFileSelect}
-        disabled={uploading}
+        style={{ display: 'none' }}
+        id="file-upload"
+        accept=".pdf,.dwg,.dxf,.step,.stp,.iges,.igs,.x_t,.x_b,.png,.jpg,.jpeg"
       />
-      <label htmlFor="file-upload-input">
+      <label htmlFor="file-upload">
         <Button
-          variant="outlined"
           component="span"
+          variant="outlined"
           startIcon={<CloudUpload />}
-          disabled={uploading || files.length >= maxFiles}
-          fullWidth
+          disabled={uploading}
           sx={{ mb: 2 }}
         >
-          Upload Files ({files.length}/{maxFiles})
+          Upload Files
         </Button>
       </label>
 
+      {error && (
+        <Typography color="error" variant="body2" sx={{ mt: 1, mb: 1 }}>
+          {error}
+        </Typography>
+      )}
+
+      {uploading && (
+        <Box sx={{ width: '100%', mb: 2 }}>
+          <LinearProgress />
+        </Box>
+      )}
+
       {files.length > 0 && (
-        <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
-          <List dense>
+        <Paper variant="outlined" sx={{ mt: 2 }}>
+          <List>
             {files.map((file) => (
               <ListItem key={file.id}>
-                <AttachFile sx={{ mr: 1 }} />
+                <AttachFile sx={{ mr: 2 }} />
                 <ListItemText
                   primary={file.name}
-                  secondary={
-                    uploadProgress[file.id] < 100 ? (
-                      <LinearProgress
-                        variant="determinate"
-                        value={uploadProgress[file.id]}
-                      />
-                    ) : null
-                  }
+                  secondary={`${(file.size / 1024).toFixed(1)} KB`}
                 />
                 <ListItemSecondaryAction>
-                  <IconButton
-                    edge="end"
-                    onClick={() => handleRemoveFile(file)}
-                    disabled={uploading}
-                  >
+                  <IconButton edge="end" onClick={() => handleDelete(file)}>
                     <Delete />
                   </IconButton>
                 </ListItemSecondaryAction>
@@ -142,15 +142,6 @@ const FileUpload = ({ onUploadComplete, maxFiles = 5, acceptedTypes = '*' }) => 
             ))}
           </List>
         </Paper>
-      )}
-
-      {uploading && (
-        <Box sx={{ width: '100%', mt: 2 }}>
-          <LinearProgress />
-          <Typography variant="caption" display="block" textAlign="center">
-            Uploading...
-          </Typography>
-        </Box>
       )}
     </Box>
   );
