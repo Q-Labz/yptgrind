@@ -133,51 +133,6 @@ const Footer = () => {
               </Box>
             </Grid>
           ))}
-
-          {/* Contact Information */}
-          <Grid item xs={12} sm={6} md={2}>
-            <Typography
-              variant="subtitle1"
-              color="text.primary"
-              sx={{ mb: 2, fontWeight: 'bold' }}
-            >
-              Contact Us
-            </Typography>
-            <Box component="address" sx={{ fontStyle: 'normal' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                123 Precision Way
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Sacramento, CA 95814
-              </Typography>
-              <Link
-                href="tel:+19165551234"
-                sx={{
-                  color: 'text.secondary',
-                  textDecoration: 'none',
-                  display: 'block',
-                  mb: 1,
-                  '&:hover': {
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                (916) 555-1234
-              </Link>
-              <Link
-                href="mailto:info@yptgrind.com"
-                sx={{
-                  color: 'text.secondary',
-                  textDecoration: 'none',
-                  '&:hover': {
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                info@yptgrind.com
-              </Link>
-            </Box>
-          </Grid>
         </Grid>
       </Container>
 
