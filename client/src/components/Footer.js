@@ -16,7 +16,6 @@ const footerLinks = [
   { title: 'Company', items: [
     { name: 'About Us', path: '/about' },
     { name: 'Services', path: '/services' },
-    { name: 'Contact', path: '/contact' },
   ]},
   { title: 'Services', items: [
     { name: 'CNC Grinding', path: '/services#cnc' },
@@ -59,6 +58,16 @@ const Footer = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Over 45 years of excellence in precision tool grinding and manufacturing solutions.
             </Typography>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" component="div">
+                1942 South Augusta Ave, Unit H<br />
+                Ontario, CA 91761
+              </Typography>
+              <Typography variant="body2" color="text.secondary" component="div" sx={{ mt: 1 }}>
+                <Link href="tel:9513688731" color="inherit">(951) 368-8731</Link><br />
+                <Link href="mailto:yptgrind@yahoo.com" color="inherit">yptgrind@yahoo.com</Link>
+              </Typography>
+            </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {socialLinks.map((social) => (
                 <IconButton
