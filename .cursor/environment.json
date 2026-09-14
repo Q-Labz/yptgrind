@@ -1,0 +1,11 @@
+{
+  "name": "Young's Precision Tool Grinding",
+  "install": "npm install && (cd client && npm install)",
+  "terminals": [
+    {
+      "name": "client-dev",
+      "command": "cd client && PORT=3005 BROWSER=none npm start"
+    }
+  ],
+  "ports": [3005]
+}
