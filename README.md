@@ -2,17 +2,19 @@
 
 A modern website for Young's Precision Tool Grinding services, built with React, Node.js, and Neon DB.
 
+**TGX Studio** (cutting tool designer + traveler + ToolRoom handoff) lives at `/studio/` and is built from the `studio/` Vite app into `client/build/studio` during `npm run build:netlify`.
+
 ## Features
 
 - Modern, responsive design
-- Interactive pages: Home, About, Services, Store, and Contact
+- Interactive pages: Home, About, Services, Store, Contact, and TGX Studio
 - AI-powered chatbot for customer support
 - Contact form with Neon DB integration
 - Online store with product catalog
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
+- Node.js (v20 or higher for the Netlify / TGX Studio build)
 - npm (v6 or higher)
 - Neon DB account
 - OpenAI API key
@@ -33,70 +35,17 @@ A modern website for Young's Precision Tool Grinding services, built with React,
    - Add your Neon DB connection string
    - Add your OpenAI API key
 
-4. Initialize the database:
-   ```sql
-   -- Run these queries in your Neon DB console
-   CREATE TABLE contacts (
-     id SERIAL PRIMARY KEY,
-     name VARCHAR(100) NOT NULL,
-     email VARCHAR(100) NOT NULL,
-     phone VARCHAR(20),
-     message TEXT NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
-
-   CREATE TABLE orders (
-     id SERIAL PRIMARY KEY,
-     name VARCHAR(100) NOT NULL,
-     email VARCHAR(100) NOT NULL,
-     phone VARCHAR(20),
-     address TEXT NOT NULL,
-     product_id INTEGER NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-   );
-   ```
-
-5. Start the development servers:
+4. Start the development servers:
    ```bash
-   # Start both frontend and backend
    npm run dev:full
-
-   # Or start them separately:
-   npm run dev      # Backend server
-   cd client && npm start  # Frontend server
    ```
 
-## Project Structure
+TGX Studio (standalone Vite app):
 
-```
-youngs-precision/
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── pages/        # Page components
-│   │   └── App.js        # Main app component
-├── server.js              # Express backend server
-├── .env                   # Environment variables
-└── README.md             # Project documentation
+```bash
+cd studio
+npm install
+npm run dev
 ```
 
-## Available Scripts
-
-- `npm run dev`: Start the backend server in development mode
-- `npm run client`: Start the frontend development server
-- `npm run dev:full`: Start both frontend and backend servers
-- `npm start`: Start the production server
-
-## Environment Variables
-
-- `PORT`: Server port (default: 5000)
-- `DATABASE_URL`: Neon DB connection string
-- `OPENAI_API_KEY`: OpenAI API key for the chatbot
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+Production URL after deploy: **https://yptgrind.com/studio/**

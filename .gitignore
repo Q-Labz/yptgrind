@@ -11,7 +11,8 @@
 # production
 /build
 /client/build
-/dist
+/studio/node_modules
+/studio/dist
 /functions-build
 .netlify
 

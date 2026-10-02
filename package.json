@@ -9,6 +9,9 @@
     "client": "cd client && PORT=3005 npm start",
     "dev:full": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd client && npm install && npm run build",
+    "build:studio": "cd studio && npm ci && VITE_BASE=/studio/ npm run build",
+    "build:client": "cd client && npm install --force && npm run build",
+    "build:netlify": "npm run build:studio && npm run build:client && rm -rf client/build/studio && cp -r studio/dist client/build/studio",
     "dev": "netlify dev"
   },
   "dependencies": {
