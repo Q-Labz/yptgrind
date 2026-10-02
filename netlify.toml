@@ -1,21 +1,30 @@
 [build]
-  base = "client"
-  command = "npm install --force && npm run build"
-  publish = "build"
+  command = "npm run build:netlify"
+  publish = "client/build"
   functions = "functions"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   CI = "false"
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/studio"
+  to = "/studio/"
+  status = 301
+
+[[redirects]]
+  from = "/studio/*"
+  to = "/studio/index.html"
   status = 200
 
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
 
 [[headers]]
@@ -25,4 +34,4 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https: http:; connect-src 'self' https://*.supabase.co wss://*.supabase.co;"
+    Content-Security-Policy = "default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: blob: https: http:; connect-src 'self' https://*.supabase.co wss://*.supabase.co;"

@@ -20,6 +20,7 @@ const pages = [
   { title: 'Home', path: '/' },
   { title: 'About', path: '/about' },
   { title: 'Services', path: '/services' },
+  { title: 'TGX Studio', href: '/studio/' },
   { title: 'Contact', path: '/contact' },
 ];
 
@@ -71,12 +72,10 @@ const Navbar = () => {
       >
         <Container maxWidth="xl">
           <Toolbar disableGutters>
-            {/* Desktop Logo */}
             <Box sx={{ display: { xs: 'none', md: 'flex' }, mr: 4 }}>
               <Logo height={50} />
             </Box>
 
-            {/* Mobile Menu */}
             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
               <IconButton
                 size="large"
@@ -91,28 +90,20 @@ const Navbar = () => {
               <Menu
                 id="menu-appbar"
                 anchorEl={anchorElNav}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                }}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                 keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'left',
-                }}
+                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                 open={Boolean(anchorElNav)}
                 onClose={handleCloseNavMenu}
-                sx={{
-                  display: { xs: 'block', md: 'none' },
-                }}
+                sx={{ display: { xs: 'block', md: 'none' } }}
               >
                 {pages.map((page) => (
                   <MenuItem
                     key={page.title}
                     onClick={handleCloseNavMenu}
-                    component={Link}
-                    to={page.path}
-                    selected={location.pathname === page.path}
+                    component={page.href ? 'a' : Link}
+                    {...(page.href ? { href: page.href } : { to: page.path })}
+                    selected={!page.href && location.pathname === page.path}
                   >
                     <Typography textAlign="center">{page.title}</Typography>
                   </MenuItem>
@@ -120,18 +111,16 @@ const Navbar = () => {
               </Menu>
             </Box>
 
-            {/* Mobile Logo */}
             <Box sx={{ display: { xs: 'flex', md: 'none' }, flexGrow: 1 }}>
               <Logo height={40} />
             </Box>
 
-            {/* Desktop Menu */}
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end' }}>
               {pages.map((page) => (
                 <Button
                   key={page.title}
-                  component={Link}
-                  to={page.path}
+                  component={page.href ? 'a' : Link}
+                  {...(page.href ? { href: page.href } : { to: page.path })}
                   onClick={handleCloseNavMenu}
                   sx={{
                     my: 2,
@@ -142,7 +131,7 @@ const Navbar = () => {
                     '&::after': {
                       content: '""',
                       position: 'absolute',
-                      width: location.pathname === page.path ? '100%' : '0%',
+                      width: !page.href && location.pathname === page.path ? '100%' : '0%',
                       height: '2px',
                       bottom: '10px',
                       left: '0',
