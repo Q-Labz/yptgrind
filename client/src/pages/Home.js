@@ -133,8 +133,9 @@ const CtaSection = ({ title, description, image, buttonText, link, reverse = fal
                   {description}
                 </Typography>
                 <Button
-                  component={Link}
-                  to={link}
+                  {...(link.startsWith('/studio') || link.startsWith('http')
+                    ? { component: 'a', href: link }
+                    : { component: Link, to: link })}
                   variant="contained"
                   size="large"
                   sx={{
@@ -245,6 +246,27 @@ const Home = () => {
                     Delivering excellence in high-precision CNC machining, conventional grinding, and custom tooling solutions for industries worldwide.
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <Button
+                      component="a"
+                      href="/studio/"
+                      variant="contained"
+                      size="large"
+                      sx={{
+                        px: 4,
+                        py: 1.5,
+                        fontSize: '1.1rem',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        backgroundColor: 'cyan.500',
+                        '&:hover': {
+                          transform: 'scale(1.05)',
+                          boxShadow: '0 6px 8px rgba(0,0,0,0.2)',
+                          backgroundColor: 'cyan.600',
+                        },
+                      }}
+                    >
+                      Open TGX Studio
+                    </Button>
                     <Button
                       component={Link}
                       to="/services#cnc"
@@ -395,6 +417,15 @@ const Home = () => {
           <Features />
         </Container>
       </Box>
+
+      {/* TGX Studio CTA */}
+      <CtaSection
+        title="TGX Studio"
+        description="Design end mills and drills, preview 3D geometry, write a TGX traveler, and hand off parameters to ToolRoom — on the same shop floor as our ANCA TGX."
+        image="https://images.pexels.com/photos/162553/keys-workshop-mechanic-tools-162553.jpeg?auto=compress&cs=tinysrgb&w=2000"
+        buttonText="Launch TGX Studio"
+        link="/studio/"
+      />
 
       {/* Final CTA Section */}
       <CtaSection

@@ -23,6 +23,7 @@ const footerLinks = [
     { name: 'Tool Design', path: '/services#design' },
   ]},
   { title: 'Resources', items: [
+    { name: 'TGX Studio', href: '/studio/' },
     { name: 'Store', path: '/store' },
     { name: 'Submit Prints', path: '/contact#prints' },
     { name: 'Get a Quote', path: '/contact#quote' },
@@ -115,8 +116,9 @@ const Footer = () => {
                     sx={{ mb: 1 }}
                   >
                     <Link
-                      component={RouterLink}
-                      to={item.path}
+                      {...(item.href
+                        ? { href: item.href }
+                        : { component: RouterLink, to: item.path })}
                       sx={{
                         color: 'text.secondary',
                         textDecoration: 'none',
