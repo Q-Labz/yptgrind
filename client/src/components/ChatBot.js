@@ -28,7 +28,7 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,11 +36,13 @@ const ChatBot = () => {
         body: JSON.stringify({ message: userMessage }),
       });
 
+      if (!response.ok) throw new Error(`Chat request failed: ${response.status}`);
+
       const data = await response.json();
       setChat(prev => [...prev, { text: data.response, sender: 'bot' }]);
     } catch (error) {
       console.error('Error:', error);
-      setChat(prev => [...prev, { text: 'Sorry, I encountered an error. Please try again later.', sender: 'bot' }]);
+      setChat(prev => [...prev, { text: "Sorry, chat isn't available right now. Call us at (951) 368-8731 or email yptgrind@yahoo.com.", sender: 'bot' }]);
     }
 
     setIsLoading(false);

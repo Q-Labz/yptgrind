@@ -2,27 +2,14 @@
   "name": "youngs-precision",
   "version": "1.0.0",
   "description": "Young's Precision Tool Grinding Website",
-  "main": "server.js",
+  "private": true,
   "scripts": {
-    "start": "node server.js",
-    "server": "PORT=5005 nodemon server.js",
-    "client": "cd client && PORT=3005 npm start",
-    "dev:full": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "cd client && npm start",
     "build": "cd client && npm install && npm run build",
     "dev": "netlify dev"
   },
-  "dependencies": {
-    "@neondatabase/serverless": "^0.6.1",
-    "@supabase/supabase-js": "^2.49.4",
-    "@vercel/postgres": "^0.10.0",
-    "dotenv": "^16.4.7",
-    "encoding": "^0.1.13",
-    "pg": "^8.14.1"
-  },
   "devDependencies": {
-    "concurrently": "^8.2.2",
     "netlify-cli": "^19.0.2",
-    "nodemon": "^3.0.3",
     "supabase": "^2.20.5"
   }
 }

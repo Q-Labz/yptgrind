@@ -118,8 +118,9 @@ const ProductCard = ({ product }) => {
           <CardMedia
             component="img"
             height="200"
-            image={imageError ? 'https://via.placeholder.com/400x200?text=No+Image' : product.image}
+            image={product.image}
             alt={product.name}
+            loading="lazy"
             onLoad={handleImageLoad}
             onError={handleImageError}
             sx={{
