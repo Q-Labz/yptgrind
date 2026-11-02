@@ -27,7 +27,6 @@ const PageHeader = ({ title, subtitle, background, image }) => {
           backgroundImage: image ? `url(${image})` : 'url(https://images.pexels.com/photos/2381463/pexels-photo-2381463.jpeg?auto=compress&cs=tinysrgb&w=2000)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
           filter: 'brightness(0.8) contrast(1.2)',
         },
         '&::after': {
